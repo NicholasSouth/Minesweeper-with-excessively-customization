@@ -15,13 +15,13 @@
 
 /* Fonts shipped with the app (files live in /fonts, next to /styles and /scripts) */
 @font-face {
-    font-family: "Twobit";
-    src: url("../fonts/Twobit.otf") format("opentype");
+    font-family: "Two Fifty Six Bytes";
+    src: url("../fonts/TwofiftysixbytesRegular-5yD0j.otf") format("opentype");
     font-display: swap;
 }
 @font-face {
-    font-family: "Minecraft";
-    src: url("../fonts/Minecraft.ttf") format("truetype");
+    font-family: "Ithaca";
+    src: url("../fonts/Ithaca-LVB75.ttf") format("truetype");
     font-display: swap;
 }
 
@@ -32,8 +32,8 @@
     padding-bottom: env(safe-area-inset-bottom, 0px);
     --cs: 32px; /* cell size, set from JS (zoom scales it) */
     --cr: min(8px, calc(var(--cs) * .25)); /* cell corner radius */
-    --font-ui: "Twobit", monospace; /* scripts can override */
-    --font-num: "Twobit", monospace; /* scripts can override */
+    --font-ui: "Two Fifty Six Bytes", monospace; /* scripts can override */
+    --font-num: "Two Fifty Six Bytes", monospace; /* scripts can override */
     --cursz: 40px; /* custom cursor size, set from scripts too */
 }
 /* 
@@ -305,6 +305,9 @@ h1 {
 }
 .credit-card h2 { margin: 0; font-size: 1.2rem; }
 .credit-card p { margin: 0; color: var(--muted); }
+.credit-card ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: .8rem; color: var(--muted); }
+.credit-card a { color: var(--accent); }
+.credit-card h3 { margin: 4px 0 0; font-size: .9rem; }
 
 /* Setup panel */
 .panel {
@@ -715,6 +718,10 @@ h1 {
     transition: opacity .15s, transform .15s;
 }
 .rsz:hover, .frame.sizing .rsz { opacity: 1; transform: scale(1.15); }
+
+/* Replay section (a .panel under the board) */
+#replay { margin-top: 14px; }
+#replay h2 { margin: 0; font-size: 1.1rem; }
 
 /* VHS replay look: scanlines, tracking bar, noise, colour fringing, jitter, PLAY label */
 .vhs { display: none; }

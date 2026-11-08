@@ -137,6 +137,23 @@
         <span id="rp" class="rp" hidden>● Replay · start a new game to stop</span>
         <span id="best"></span>
       </p>
+
+      <!-- replay section: watch, save as .misw, load a .misw -->
+      <section class="panel" id="replay" aria-label="Replay">
+        <h2>Replay</h2>
+        <p id="rp-info" class="hint"></p>
+        <div class="row">
+          <button id="rp-play" type="button">Watch replay</button>
+          <label>Speed <select id="rp-speed"></select></label>
+          <label class="check"><input id="rp-auto" type="checkbox"> Replay automatically when a game ends</label>
+        </div>
+        <div class="row">
+          <button id="rp-export" type="button">Export .misw</button>
+          <button id="rp-import" type="button">Import .misw</button>
+          <input id="rp-file" type="file" accept=".misw,application/json" hidden>
+        </div>
+        <p id="rp-msg" class="hint" role="status" aria-live="polite"></p>
+      </section>
       <p class="info">
         Left-click or tap to open a cell (on a flag it removes the flag and opens the cell). 
         Right-click or long-press to flag. 
@@ -191,7 +208,7 @@
       <label class="vol sub">Chord <output id="out-chord">50%</output>
         <input id="vol-chord" data-ch="chord" type="range" min="0" max="100" step="1">
       </label>
-      <label class="vol sub">Flag <output id="out-flag">75%</output>
+      <label class="vol sub">Flag <output id="out-flag">100%</output>
         <input id="vol-flag" data-ch="flag" type="range" min="0" max="100" step="1">
       </label>
       <label class="vol sub">Interface click <output id="out-ui">50%</output>
@@ -206,7 +223,7 @@
       <label class="vol sub">Lose sound <output id="out-lose">50%</output>
         <input id="vol-lose" data-ch="lose" type="range" min="0" max="100" step="1">
       </label>
-      <label class="vol">Music <output id="out-music">40%</output>
+      <label class="vol">Music <output id="out-music">30%</output>
         <input id="vol-music" data-ch="music" type="range" min="0" max="100" step="1">
       </label>
       <label class="vol">Background video <output id="out-video">50%</output>
@@ -391,6 +408,16 @@
     <div class="credit-card">
       <h2>Minesweeper</h2>
       <p id="credit-text">Intellectual property of Nguyen Thien Nhan, HCMUTE-24110114</p>
+      <h3>Music</h3>
+      <ul>
+        <li>Classic by <a href="https://www.joakimkarud.com/use-my-music/" target="_blank" rel="noopener">Joakim Karud</a>, Creative Commons Attribution (CC BY)</li>
+        <li>Dreams by Dj Quads</li>
+      </ul>
+      <h3>Fonts</h3>
+      <ul>
+        <li>Two Fifty Six Bytes by <a href="https://www.typodermicfonts.com" target="_blank" rel="noopener">Ray Larabie</a>, CC0 (public domain)</li>
+        <li>Ithaca by <a href="https://ggbot.itch.io/ithaca-font" target="_blank" rel="noopener">GGBotNet</a>, SIL Open Font License 1.1</li>
+      </ul>
       <button id="credit-close" type="button">Close</button>
     </div>
   </div>

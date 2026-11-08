@@ -135,8 +135,8 @@ const num = (v, a, b, d) => Number.isFinite(+v) ? Math.min(b, Math.max(a, Math.r
 // Saved settings in this browser override them; clear the site data to see new defaults.
 const DEF = {
     vol: { 
-        master: 100, sfx: 50, reveal: 50, chord: 50, flag: 75, ui: 50, 
-        explode: 100, win: 100, lose: 50, music: 40, video: 50 
+        master: 100, sfx: 50, reveal: 50, chord: 50, flag: 100, ui: 50, 
+        explode: 100, win: 100, lose: 50, music: 30, video: 50 
     },
     curSize: 25,
     dim: 0,
@@ -172,6 +172,13 @@ const save = () => store.set('settings', S);
     Each sound is a slot: default file, sidebar label, volume channel.
     To add one: drop the file in /audio and add a line to SLOTS. 
 */
+// the two background tracks that ship with the site (a user upload still overrides them)
+const TRACKS = [
+    { id: 'classic', label: 'Joakim Karud - Classic', src: 'audio/Joakim_Karud_-_Classic.mp3' },
+    { id: 'dreams',  label: 'Dj Quads - Dreams',      src: 'audio/Dj_Quads_-_Dreams.mp3' }
+];
+if (!TRACKS.some(t => t.id === S.track)) S.track = 'classic'; // default track
+const track = () => TRACKS.find(t => t.id === S.track);
 const SLOTS = [
     { id: 'reveal',  label: 'Reveal cell',     src: 'audio/select.mp3',      ch: 'reveal'  },
     { id: 'chord',   label: 'Chord',           src: 'audio/select.mp3',      ch: 'chord'   },
@@ -180,7 +187,7 @@ const SLOTS = [
     { id: 'explode', label: 'Explosion',       src: 'audio/explosion.mp3',   ch: 'explode' },
     { id: 'win',     label: 'Win',             src: 'audio/win.mp3',         ch: 'win'     },
     { id: 'lose',    label: 'Lose',            src: 'audio/loose.mp3',       ch: 'lose'    },
-    { id: 'music',   label: 'Music',           src: 'audio/bgm-default.mp3', ch: 'music'   }
+    { id: 'music',   label: 'Music',           get src() { return track().src; }, ch: 'music' }
 ];
 const SLOT = Object.fromEntries(SLOTS.map(s => [s.id, s]));
 const MAX_UPLOAD = 8 * 1024 * 1024;   // 8 MB
@@ -262,7 +269,7 @@ const rnd = (a, b) => a + Math.random() * (b - a);
 let g, cells = [], cur = 0, t0 = 0, tick = 0;
 let origin = 0; // cell the last action started from; animations ripple out from it
 let flagMode = false, lp = 0, lpFired = false;
-let zoom = 1, csNow = 32, lastDims = '';
+let zoom = 1, csNow = 32, lastDims = '', builtDims = '';
 
 /* 
     APP BACKGROUND  (#appbg, #app-video)
@@ -655,6 +662,7 @@ function build() {
     board.textContent = '';
     board.style.gridTemplateColumns = 'repeat(' + g.cols + ',var(--cs))';
     cells = [];
+    builtDims = g.rows + 'x' + g.cols;
     for (let r = 0; r < g.rows; r++) {
         const row = document.createElement('div');
         row.className = 'row-g';
@@ -672,7 +680,12 @@ function build() {
     draw();
 }
 function fit() {
-    const fit0 = Math.max(24, Math.min(38, Math.floor((innerWidth - 72) / g.cols)));
+    // biggest cell that shows the whole board with no scrollbar: the board has to fit the
+    // width of the app card and the 72vh height limit of .wrap (zoom 1 = no scrollbars)
+    const fs = getComputedStyle(frame), app = $('.app');
+    const availW = app.clientWidth - parseFloat(fs.paddingLeft) - parseFloat(fs.paddingRight) - 2;
+    const availH = innerHeight * .72 - 2;
+    const fit0 = Math.max(16, Math.min(38, Math.floor(Math.min(availW / g.cols, availH / g.rows))));
     csNow = Math.max(10, Math.min(120, Math.round(fit0 * zoom))); // zoom scales the cell size
     root.style.setProperty('--cs', csNow + 'px');
 }
@@ -796,52 +809,118 @@ function end() {
     REPLAY: every move that changes the board is recorded as { k, i, t }
     (k: 'r' open, 'f' flag, 'c' chord; i: cell index; t: ms since the first open).
     Mines are placed from the game's seed, so re-applying the same moves to a fresh
-    game with that seed reproduces it exactly. After a win or loss the moves play
-    back on the board in a loop until a new game starts.
+    game with that seed reproduces it exactly. A finished game is kept as rpData,
+    plays back in a loop on the board, and can be saved as a .misw file (JSON),
+    or loaded back from one.
 */
-let moves = [], replaying = false, rpTimer = 0;
+const MISW_VERSION = 1, SPEEDS = [0.5, 1, 2, 4, 8];
+let moves = [], replaying = false, rpTimer = 0, rpData = null;
 const rpBadge = $('#rp');
+S.rpSpeed = SPEEDS.includes(+S.rpSpeed) ? +S.rpSpeed : 1;
+S.rpAuto = S.rpAuto !== false;
 function recordMove(k, i, before) {
     const t = before === 'idle' ? 0 : Math.round(performance.now() - t0);
     moves.push({ k, i, t });
+}
+// one move on any game object (opening a flag removes it first, like a left-click does)
+function applyTo(game, m) {
+    if (m.k === 'f') flag(game, m.i);
+    else if (m.k === 'c') chord(game, m.i);
+    else {
+        if (game.st[m.i] === 2) flag(game, m.i);
+        reveal(game, m.i);
+    }
+}
+function makeReplay(game, mv, ms) {
+    return {
+        rows: game.rows, cols: game.cols, mines: game.mines, safety: game.safety, seed: game.seed,
+        result: game.status, ms: Math.round(ms || 0), moves: mv.map(m => ({ ...m })),
+        created: new Date().toISOString()
+    };
+}
+const serializeReplay = d => ({
+    format: 'misw', version: MISW_VERSION, app: 'Minesweeper', created: d.created,
+    rows: d.rows, cols: d.cols, mines: d.mines, safety: d.safety, seed: d.seed,
+    result: d.result, ms: d.ms, moves: d.moves.map(m => [m.k, m.i, m.t])
+});
+// check a parsed .misw object and replay it on a hidden game; throws a readable error
+function parseReplay(o) {
+    if (!o || typeof o !== 'object' || o.format !== 'misw') 
+        throw new Error('This is not a .misw replay file.');
+    if (o.version !== MISW_VERSION) 
+        throw new Error('This replay was made by a different version.');
+    const rows = +o.rows, cols = +o.cols, mines = +o.mines, seed = +o.seed;
+    if (!Number.isInteger(rows) || !Number.isInteger(cols) 
+        || rows < 5 || cols < 5 || rows > 50 || cols > 50) 
+        throw new Error('The board size in this replay is not valid.');
+    if (!Number.isInteger(mines) || mines < 1 || mines >= rows * cols) 
+        throw new Error('The mine count in this replay is not valid.');
+    if (!RES[o.safety]) throw new Error('The first-click mode in this replay is not valid.');
+    if (!Number.isInteger(seed) || seed < 0 || seed > 4294967295) 
+        throw new Error('The seed in this replay is not valid.');
+    if (!Array.isArray(o.moves) || !o.moves.length || o.moves.length > 50000) 
+        throw new Error('This replay has no moves, or too many.');
+    const n = rows * cols, mv = [];
+    for (const a of o.moves) {
+        if (!Array.isArray(a) || !'rfc'.includes(a[0]) 
+            || a[0].length !== 1 || !Number.isInteger(a[1]) || a[1] < 0 
+            || a[1] >= n || !Number.isFinite(+a[2]) || +a[2] < 0)
+            throw new Error('This replay contains a broken move.');
+        mv.push({ k: a[0], i: a[1], t: Math.round(+a[2]) });
+    }
+    const sim = newGame(rows, cols, mines, o.safety, seed);
+    mv.forEach(m => applyTo(sim, m));
+    if (sim.status === 'idle') throw new Error('This replay never opens a cell.');
+    return {
+        rows, cols, mines: sim.mines, safety: o.safety, seed, moves: mv,
+        result: sim.status === 'playing' ? 'unfinished' : sim.status, // trust the replay, not the label
+        ms: Math.round(Math.max(0, +o.ms) || mv[mv.length - 1].t),
+        created: typeof o.created === 'string' ? o.created.slice(0, 40) : new Date().toISOString()
+    };
 }
 function stopReplay() {
     clearTimeout(rpTimer);
     replaying = false;
     rpBadge.hidden = true;
     frame.classList.remove('vhs-on');
-}
-function applyMove(m) {
-    origin = m.i;
-    if (m.k === 'f') flag(g, m.i);
-    else if (m.k === 'c') chord(g, m.i);
-    else {
-        if (g.st[m.i] === 2) flag(g, m.i); // opening a flag removes it first
-        reveal(g, m.i);
-    }
+    paintReplay();
 }
 function replayClock(t) {
     $('#tm').textContent = String(Math.min(999, Math.floor(t / 1000))).padStart(3, '0');
 }
-function replayStart() {
-    if (!moves.length || (g.status !== 'won' && g.status !== 'lost')) return;
+function playReplay(d) {
+    clearTimeout(rpTimer);
+    clearInterval(tick);
     replaying = true;
     rpBadge.hidden = false;
     frame.classList.add('vhs-on'); // VHS look while the replay plays
-    replayRound(g);
+    $('#msg').textContent = '';
+    replayRound(d);
+    paintReplay();
 }
-function replayRound(done) {
+function replayRound(d) {
     if (!replaying) return;
-    g = newGame(done.rows, done.cols, done.mines, done.safety, done.seed);
+    g = newGame(d.rows, d.cols, d.mines, d.safety, d.seed);
     origin = 0;
-    draw();
+    cur = 0;
+    if (builtDims !== d.rows + 'x' + d.cols) { // an imported replay can have another board size
+        lastDims = builtDims = d.rows + 'x' + d.cols;
+        zoom = 1;
+        wrap.scrollLeft = 0;
+        wrap.scrollTop = 0;
+        build();
+        paintZoom();
+    } else {
+        draw();
+    }
     hud();
     replayClock(0);
     let k = 0;
     const step = () => {
         if (!replaying) return;
-        const m = moves[k++];
-        applyMove(m);
+        const m = d.moves[k++];
+        origin = m.i;
+        applyTo(g, m);
         draw();
         hud();
         replayClock(m.t);
@@ -850,15 +929,111 @@ function replayRound(done) {
         } else if (m.k !== 'f') {
             splash(m.i);
         }
-        if (k >= moves.length) {
-            rpTimer = setTimeout(() => replayRound(done), 250); // hold the end, then loop
+        if (k >= d.moves.length) {
+            rpTimer = setTimeout(() => replayRound(d), 500 / S.rpSpeed); // hold the end, then loop
         } else {
-            const gap = moves[k].t - m.t;
-            rpTimer = setTimeout(step, Math.min(150, Math.max(30, gap)));
+            const gap = d.moves[k].t - m.t;
+            rpTimer = setTimeout(step, Math.max(16, Math.min(400, Math.max(80, gap)) / S.rpSpeed));
         }
     };
-    rpTimer = setTimeout(step, 200);
+    rpTimer = setTimeout(step, 200 / S.rpSpeed);
 }
+// a game just ended: keep it as the current replay, and play it if auto-replay is on
+function finishReplay() {
+    rpData = makeReplay(g, moves, g.ms);
+    store.set('lastReplay', serializeReplay(rpData));
+    paintReplay();
+    if (S.rpAuto) rpTimer = setTimeout(() => playReplay(rpData), 2800);
+}
+function saveFile(blob, name) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+}
+const rpName = ext => 'minesweeper-' + rpData.rows + 'x' + rpData.cols + '-' + rpData.result + '-'
+    + new Date().toISOString().slice(0, 16).replace(/[-:]/g, '').replace('T', '-') + '.' + ext;
+const liveGame = () => !replaying && g.status === 'playing' && moves.length > 0;
+const rpEl = {
+    info: $('#rp-info'), play: $('#rp-play'), speed: $('#rp-speed'), auto: $('#rp-auto'),
+    exp: $('#rp-export'), imp: $('#rp-import'), file: $('#rp-file'), msg: $('#rp-msg')
+};
+const fmtSec = ms => (ms / 1000).toFixed(1) + ' s';
+function paintReplay() {
+    const d = rpData;
+    rpEl.info.textContent = !d
+        ? 'Finished games are saved here automatically. You can also import a .misw file.'
+        : (replaying ? 'Playing: ' : 'Saved: ') + d.rows + '×' + d.cols + ' board, ' + d.mines + ' mines, ' 
+          + d.moves.length + ' moves, '
+          + (d.result === 'won' ? 'cleared in ' + fmtSec(d.ms) : d.result === 'lost' ? 'lost after ' + fmtSec(d.ms) 
+            : 'unfinished') + '.';
+    rpEl.play.textContent = replaying ? 'Stop replay' : 'Watch replay';
+    rpEl.play.disabled = !d && !replaying;
+    rpEl.speed.value = S.rpSpeed;
+    rpEl.auto.checked = S.rpAuto;
+    rpEl.exp.disabled = !d;
+}
+const rpSay = t => { rpEl.msg.textContent = t; };
+SPEEDS.forEach(s => rpEl.speed.add(new Option(s + '×', s)));
+rpEl.speed.onchange = () => {
+    S.rpSpeed = +rpEl.speed.value;
+    save();
+};
+rpEl.auto.onchange = () => {
+    S.rpAuto = rpEl.auto.checked;
+    save();
+};
+rpEl.play.onclick = () => {
+    sfx('ui');
+    if (replaying) {
+        start(); // stops the replay and deals a fresh board
+        return;
+    }
+    if (!rpData) return;
+    if (liveGame() && !confirm('A game is in progress. Watching the replay will end it. Continue?')) return;
+    playReplay(rpData);
+};
+rpEl.exp.onclick = () => {
+    if (!rpData) return;
+    saveFile(new Blob([JSON.stringify(serializeReplay(rpData))], { type: 'application/json' }), rpName('misw'));
+    rpSay('Saved ' + rpName('misw').slice(0, 60) + ' to your downloads.');
+    sfx('ui');
+};
+rpEl.imp.onclick = () => rpEl.file.click();
+rpEl.file.onchange = async e => {
+    const f = e.target.files[0];
+    e.target.value = '';
+    if (!f) return;
+    try {
+        if (f.size > 2 * 1024 * 1024) throw new Error('That file is too big to be a replay.');
+        let o;
+        try {
+            o = JSON.parse(await f.text());
+        } catch (err) {
+            throw new Error('This is not a .misw replay file.');
+        }
+        const d = parseReplay(o);
+        if (liveGame() && !confirm('A game is in progress. Importing a replay will end it. Continue?')) return;
+        rpData = d;
+        store.set('lastReplay', serializeReplay(d));
+        playReplay(d);
+        rpSay('Loaded ' + f.name + '. It plays in a loop; press Stop replay or New game to leave it.');
+        sfx('ui');
+    } catch (err) {
+        rpSay(err.message);
+    }
+};
+paintReplay();
+try { // bring back the last saved replay from an earlier visit
+    const saved = store.get('lastReplay', null);
+    if (saved) {
+        rpData = parseReplay(saved);
+        paintReplay();
+    }
+} catch (e) {}
 function act(fn, snd, mv) {
     if (replaying || g.status === 'won' || g.status === 'lost') return;
     const before = g.status, rev0 = g.rev, flags0 = g.flags;
@@ -877,12 +1052,12 @@ function act(fn, snd, mv) {
         sfx('explode');
         sfx('lose');
         boomFx();
-        rpTimer = setTimeout(replayStart, 2800);
+        finishReplay();
     } else if (g.status === 'won') {
         end();
         sfx('win');
         winFx();
-        rpTimer = setTimeout(replayStart, 2800);
+        finishReplay();
     } else {
         sfx(snd);
     }
@@ -1276,8 +1451,9 @@ const say = t => { sndMsg.textContent = t; };
 const rows = {};
 function refreshRow(id) {
     const r = rows[id], c = custom[id];
-    r.name.textContent = c ? c.name : 'Default';
-    r.name.title = c ? c.name : '';
+    const nm = c ? c.name : id === 'music' ? track().label : 'Default';
+    r.name.textContent = nm;
+    r.name.title = nm;
     r.reset.disabled = !c;
 }
 function setCustom(id, blob, name) {
@@ -1360,6 +1536,22 @@ SLOTS.forEach(s => {
                     reset: el.querySelector('.rst'), 
                     play: el.querySelector('.play') 
                  };
+    if (s.id === 'music') { // choose one of the shipped tracks
+        const sel = document.createElement('select');
+        sel.setAttribute('aria-label', 'Music track');
+        TRACKS.forEach(t => sel.add(new Option(t.label, t.id)));
+        sel.value = S.track;
+        sel.onchange = () => {
+            S.track = sel.value;
+            save();
+            pvClear('music');
+            if (!custom.music) loadSlot('music'); // an uploaded file keeps playing until it is reset
+            refreshRow('music');
+            applyAudio();
+            say('Music: ' + track().label + (custom.music ? ' (your uploaded file is still in use; press Reset to hear it).' : '.'));
+        };
+        el.insertBefore(sel, el.querySelector('.snd-btns'));
+    }
     el.querySelector('.play').onclick = () => pvToggle(s.id);
     el.querySelector('.up').onclick = () => file.click();
     file.onchange = () => {
@@ -1383,7 +1575,7 @@ SLOTS.forEach(s => {
         refreshRow(s.id);
         if (s.id === 'music') applyAudio();
         idb.del(s.id).catch(() => {});
-        say(s.label + ': back to the default sound.');
+        say(s.label + (s.id === 'music' ? ': back to ' + track().label + '.' : ': back to the default sound.'));
     };
     $('#sounds').appendChild(el);
     refreshRow(s.id);
@@ -1450,33 +1642,33 @@ $('#colors-reset').onclick = () => {
 /* THEME TAB: Fonts (app font + board/counter font) */
 // ui = default app text size (px), num = default board/counter size (%). Each font has its own.
 const FONTS = {
-    twobit:   { label: 'Twobit',          ui: 22, num: 110, stack: '"Twobit", monospace' }, // fonts/Twobit.otf
+    bytes:    { label: 'Two Fifty Six Bytes', ui: 20, num: 105, stack: '"Two Fifty Six Bytes", monospace' }, // fonts/TwofiftysixbytesRegular-5yD0j.otf
     times:    { label: 'Times New Roman', ui: 20, num: 115, stack: '"Times New Roman", Times, serif' },
     consolas: { label: 'Consolas',        ui: 19, num: 105, stack: 'Consolas, "Courier New", monospace' },
     segoe:    { label: 'Segoe UI',        ui: 18, num: 100, stack: '"Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif' },
-    minecraft:{ label: 'Minecraft',       ui: 20, num: 105, stack: '"Minecraft", monospace' }, // fonts/Minecraft.ttf
+    ithaca:   { label: 'Ithaca',          ui: 24, num: 115, stack: '"Ithaca", sans-serif' }, // fonts/Ithaca-LVB75.ttf
     comic:    { label: 'Comic Sans MS',   ui: 19, num: 100, stack: '"Comic Sans MS", "Comic Sans", "Chalkboard SE", cursive' }
 };
 const CUSTOM_SIZE = { ui: 18, num: 100 }; // default for an uploaded font
 // ui = whole app; num = board digits, mine counter, timer (--font-num)
 const T = {
     ui: {
-        prop: 'font', def: 'twobit', family: 'MSCustomFont', fallback: 'sans-serif',
+        prop: 'font', def: 'bytes', family: 'MSCustomFont', fallback: 'sans-serif',
         idb: 'font', name: 'App font', sk: 'ui', min: 12, max: 36, step: 1, unit: 'px',
         size: $('#font-size'), sout: $('#out-font-size'), sdef: $('#font-size-def'),
         sel: $('#font-sel'), up: $('#font-up'), rst: $('#font-rst'), 
              file: $('#font-file'), msg: $('#font-msg'), face: null
     },
     num: {
-        prop: 'fontNum', def: 'twobit', family: 'MSCustomNumFont', fallback: 'ui-monospace, Menlo, Consolas, monospace',
+        prop: 'fontNum', def: 'bytes', family: 'MSCustomNumFont', fallback: 'ui-monospace, Menlo, Consolas, monospace',
         idb: 'font-num', name: 'Board and counter font', sk: 'num', min: 60, max: 180, step: 5, unit: '%',
         size: $('#font-num-size'), sout: $('#out-font-num-size'), sdef: $('#font-num-size-def'),
         sel: $('#font-num-sel'), up: $('#font-num-up'), rst: $('#font-num-rst'), 
              file: $('#font-num-file'), msg: $('#font-num-msg'), face: null
     }
 };
-if (!FONTS[S.font] && S.font !== 'custom') S.font = 'twobit';
-if (!FONTS[S.fontNum] && S.fontNum !== 'custom' && S.fontNum !== 'same') S.fontNum = 'twobit';
+if (!FONTS[S.font] && S.font !== 'custom') S.font = 'bytes';
+if (!FONTS[S.fontNum] && S.fontNum !== 'custom' && S.fontNum !== 'same') S.fontNum = 'bytes';
 S.fontSize = S.fontSize || {};
 Object.values(T).forEach(t => {
     const old = S.fontSize[t.sk] || {}, clean = {};
