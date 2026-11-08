@@ -1,0 +1,411 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Minesweeper</title>
+  <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+  <!-- App background: if choose video, its loop, muted, 
+   prevent mobile browser to show a player
+   prevent picture in picture in mobile browser
+   hidden the media player -->
+  <div id="appbg" class="appbg" aria-hidden="true" hidden>
+    <video id="app-video" 
+      loop muted playsinline disablepictureinpicture hidden>
+    </video>
+  </div>
+
+  <!-- This is the whole app's panel -->
+  <div class="app">
+    <!-- Header contain web name, theme choose, quick mute, setting button -->
+    <header>
+      <h1 id="app-title" role="button" tabindex="0" title="Credits">Minesweeper</h1>
+      <div class="tools">
+        <div id="theme" class="dots" role="group" aria-label="Theme"></div>
+        <button id="mute" aria-label="Toggle sound"></button>
+        <!-- aria-control, aria-expanded indicate this button is used to control another object -->
+        <button 
+          id="settings-btn" 
+          aria-label="Settings" 
+          aria-controls="settings" aria-expanded="false">
+        </button>
+      </div>
+    </header>
+
+    <!-- difficulty set up -->
+    <section class="panel" aria-label="Game setup">
+      <div class="row">
+        <label>Board 
+          <select id="diff">
+            <option value="beginner">Beginner 9×9, 10</option>
+            <option value="intermediate">Intermediate 16×16, 40</option>
+            <option value="expert">Expert 16×30, 99</option>
+            <option value="custom">Custom</option>
+          </select>
+        </label>
+        <label>Rows <input id="rows" type="text" inputmode="numeric" autocomplete="off"></label>
+        <label>Columns <input id="cols" type="text" inputmode="numeric" autocomplete="off"></label>
+        <label>Mines <input id="mc" type="text" inputmode="numeric" autocomplete="off"></label>
+        <label>Percent <input id="mp" type="text" inputmode="decimal" autocomplete="off"></label>
+        <label><input id="sl" type="range" min="1" max="10" aria-label="Mine count"></label>
+      </div>
+      <p id="sum"></p>
+      <p id="warn" hidden>
+        <strong>Warning:</strong> 
+        above 35% mines, most boards can't be solved without guessing.
+      </p>
+      <div class="row">
+        <!-- how the first click should work to prevent loosing in the first try-->
+        <label>First click 
+          <select id="safety">
+            <option value="zone">Safe zone (3×3)</option>
+            <option value="cell">Safe cell</option>
+            <option value="none">No protection</option>
+          </select>
+        </label>
+        <!-- to fast change to custom difficulty -->
+        <button id="edit">Edit as custom</button>
+        <button id="start">New game</button>
+        <button id="flagmode" aria-pressed="false">
+          <img class="btn-ico" src="assets/flag-icon.png" alt="" width="18" height="18"> 
+          Flag mode
+        </button>
+      </div>
+    </section>
+
+    <!-- the gaming area -->
+    <section aria-label="Game">
+      <div class="frame">
+        <!-- drag this bar to move the whole board; arrow keys move it when focused -->
+        <div id="grip" class="grip" role="button" tabindex="0" 
+          title="Drag to move the board" 
+          aria-label="Move board. Drag it, or press the arrow keys. 
+          Double-click or press Home to reset the layout.">
+        </div>
+        <!-- hud -> head-up display -->
+        <!-- lcd -> the score display -->
+        <div class="hud">
+          <!-- mine left -->
+          <output id="mleft" class="lcd" aria-label="Mines left">000</output>
+          <button id="face" aria-label="New game" data-face="default"></button>
+          <!-- time played -->
+          <output id="tm" class="lcd" aria-label="Seconds">000</output>
+        </div>
+        <!-- zoom: buttons, Ctrl+wheel, pinch; drag the board to pan -->
+        <div class="zoombar" role="group" aria-label="Board zoom">
+          <button id="zout" type="button" class="small" aria-label="Zoom out">-</button>
+          <output id="zlvl" aria-label="Zoom level">100%</output>
+          <button id="zin" type="button" class="small" aria-label="Zoom in">+</button>
+          <!-- Reset view to reset zoom -->
+          <button id="zreset" type="button" class="small">Reset view</button>
+          <!-- Reset layout to move/resize the board back to default -->
+          <button id="lreset" type="button" class="small">Reset layout</button>
+        </div>
+
+        <!-- the cells -->
+        <div class="wrap">
+          <div class="boardbox">
+          <!-- the board CAN also have difference bg from the app -->
+          <video id="board-video" class="bgvid" 
+            loop muted playsinline disablepictureinpicture aria-hidden="true" hidden>
+          </video>
+          <div 
+            id="board" role="grid" tabindex="0" 
+            aria-label="Minesweeper board. Arrow keys move, D or space reveals, F flags, C chords, 
+            R restarts, plus and minus zoom, 0 resets the view.">
+          </div>
+          </div>
+        </div>
+        <!-- VHS look, shown only while a replay plays -->
+        <div class="vhs" aria-hidden="true">
+          <span class="vhs-osd">▶ PLAY</span>
+          <span class="vhs-bar"></span>
+        </div>
+        <!-- the board resize button in the bottom right corner -->
+        <div 
+          id="rsz" class="rsz" role="separator" 
+          aria-label="Resize board. Drag the corner." 
+          title="Drag to resize">
+        </div>
+      </div>
+
+      <!-- the keybinding guide -->
+      <p class="info">
+        <span id="msg" aria-live="polite"></span>
+        <span id="rp" class="rp" hidden>● Replay · start a new game to stop</span>
+        <span id="best"></span>
+      </p>
+      <p class="info">
+        Left-click or tap to open a cell (on a flag it removes the flag and opens the cell). 
+        Right-click or long-press to flag. 
+        Click a satisfied number to chord. 
+        Keyboard: arrows move, D or Space opens, F flags, C chords, R restarts. 
+        Drag the board to pan. 
+        Zoom with the buttons, Ctrl + wheel, pinch, or + and - on the keyboard; 0 resets the view. 
+        Move the whole board by its grip bar, resize it from the bottom-right corner, 
+        and use Reset layout to put it back.
+      </p>
+    </section>
+  </div>
+
+  <!-- settings: retractable right side bar -->
+  <aside id="settings" class="settings" role="region" aria-label="Settings" data-open="false">
+    <div class="sb-head">
+      <h2>Settings</h2>
+    </div>
+
+    <!-- navigation tab -->
+    <div class="tabs" role="tablist" aria-label="Settings sections">
+      <button 
+        id="tab-btn-audio" type="button" role="tab" aria-selected="true" aria-controls="tab-audio">
+        Audio
+      </button>
+      <button 
+        id="tab-btn-theme" type="button" role="tab"
+        aria-selected="false" aria-controls="tab-theme" tabindex="-1">
+        Theme
+      </button>
+      <button 
+        id="tab-btn-effects" type="button" role="tab" 
+        aria-selected="false" aria-controls="tab-effects" tabindex="-1">
+        Effects
+      </button>
+    </div>
+
+    <!-- Audio settings -->
+    <div id="tab-audio" class="tabpanel" role="tabpanel" aria-labelledby="tab-btn-audio">
+    <section class="sb-sec" aria-label="Volume">
+      <!-- Volume setting -->
+      <h3>Volume</h3>
+      <label class="vol">Master volume <output id="out-master">100%</output>
+        <input id="vol-master" data-ch="master" type="range" min="0" max="100" step="1">
+      </label>
+      <label class="vol">All sound effects <output id="out-sfx">50%</output>
+        <input id="vol-sfx" data-ch="sfx" type="range" min="0" max="100" step="1">
+      </label>
+      <label class="vol sub">Reveal <output id="out-reveal">50%</output>
+        <input id="vol-reveal" data-ch="reveal" type="range" min="0" max="100" step="1">
+      </label>
+      <label class="vol sub">Chord <output id="out-chord">50%</output>
+        <input id="vol-chord" data-ch="chord" type="range" min="0" max="100" step="1">
+      </label>
+      <label class="vol sub">Flag <output id="out-flag">75%</output>
+        <input id="vol-flag" data-ch="flag" type="range" min="0" max="100" step="1">
+      </label>
+      <label class="vol sub">Interface click <output id="out-ui">50%</output>
+        <input id="vol-ui" data-ch="ui" type="range" min="0" max="100" step="1">
+      </label>
+      <label class="vol sub">Explosion <output id="out-explode">100%</output>
+        <input id="vol-explode" data-ch="explode" type="range" min="0" max="100" step="1">
+      </label>
+      <label class="vol sub">Win sound <output id="out-win">100%</output>
+        <input id="vol-win" data-ch="win" type="range" min="0" max="100" step="1">
+      </label>
+      <label class="vol sub">Lose sound <output id="out-lose">50%</output>
+        <input id="vol-lose" data-ch="lose" type="range" min="0" max="100" step="1">
+      </label>
+      <label class="vol">Music <output id="out-music">40%</output>
+        <input id="vol-music" data-ch="music" type="range" min="0" max="100" step="1">
+      </label>
+      <label class="vol">Background video <output id="out-video">50%</output>
+        <input id="vol-video" data-ch="video" type="range" min="0" max="100" step="1">
+      </label>
+    </section>
+    <!-- Customize audio -->
+    <section class="sb-sec" aria-label="Custom sounds">
+      <h3>Sounds</h3>
+      <p class="hint">
+        Upload your own audio file for any slot (mp3, wav, ogg; up to 8 MB). 
+        Files stay in this browser only.
+      </p>
+      <p id="snd-msg" class="hint" role="status" aria-live="polite"></p>
+      <div id="sounds"></div>
+    </section>
+    </div>
+
+    <!-- Theme settings -->
+    <div id="tab-theme" class="tabpanel" role="tabpanel" aria-labelledby="tab-btn-theme" hidden>
+      <section class="sb-sec" aria-label="Colors">
+        <h3>Colors</h3>
+        <p class="hint">
+          Editing the 
+          <strong id="cur-theme">novel</strong> theme. Each theme keeps its own colors.
+        </p>
+        <div id="colors" class="colors"></div>
+        <div class="snd-btns">
+          <button id="colors-reset" type="button" class="small">Reset colors</button>
+        </div>
+      </section>
+
+      <!-- Font customizations -->
+      <section class="sb-sec" aria-label="Fonts">
+        <h3>Fonts</h3>
+        <div class="fontbox">
+          <label>App font <select id="font-sel"></select></label>
+          <p class="hint">Titles, buttons, panels and this sidebar.</p>
+          <label class="vol">Size <output id="out-font-size">22 px</output>
+            <input id="font-size" type="range" min="12" max="36" step="1">
+          </label>
+          <div class="snd-btns">
+            <button id="font-size-def" type="button" class="small">Default size</button>
+            <button id="font-up" type="button" class="small">Upload font</button>
+            <button id="font-rst" type="button" class="small">Remove uploaded font</button>
+          </div>
+          <input id="font-file" type="file" accept=".ttf,.otf,.woff,.woff2,font/*" hidden>
+          <p id="font-msg" class="hint" role="status" aria-live="polite">
+            Upload a .ttf, .otf, .woff or .woff2 file (up to 8 MB).
+          </p>
+        </div>
+        <div class="fontbox">
+          <label>Board and counter font <select id="font-num-sel"></select></label>
+          <p class="hint">The numbers on the board plus the mine counter and the timer.</p>
+          <label class="vol">Size <output id="out-font-num-size">110%</output>
+            <input id="font-num-size" type="range" min="60" max="180" step="5">
+          </label>
+          <div class="snd-btns">
+            <button id="font-num-size-def" type="button" class="small">Default size</button>
+            <button id="font-num-up" type="button" class="small">Upload font</button>
+            <button id="font-num-rst" type="button" class="small">Remove uploaded font</button>
+          </div>
+          <input id="font-num-file" type="file" accept=".ttf,.otf,.woff,.woff2,font/*" hidden>
+          <p id="font-num-msg" class="hint" role="status" aria-live="polite">
+            Upload a .ttf, .otf, .woff or .woff2 file (up to 8 MB).
+          </p>
+        </div>
+      </section>
+
+      <!-- Cursor settings -->
+      <section class="sb-sec" aria-label="Cursors">
+        <h3>Cursors</h3>
+        <label class="check"><input id="cur-on" type="checkbox"> Use custom cursors</label>
+        <p class="hint">
+          <strong>Normal</strong> is the default pointer. 
+          <strong>Select</strong> shows while the left button is held. 
+          <strong>Flag</strong> shows on a right click, and over the board while flag mode is on. 
+          <strong>Holding</strong> shows while you drag the grip bar. 
+          <strong>Text and resize</strong> shows over text boxes and the resize corner. 
+          The page draws the cursor itself, so images of any size work, 
+          but it only follows a mouse (not touch). 
+          The hotspot is the point of the image that does the clicking.
+        </p>
+        <label class="vol">Cursor size <output id="out-cursz">25 px</output>
+          <input id="cursz" type="range" min="16" max="96" step="1">
+        </label>
+        <p id="cur-msg" class="hint" role="status" aria-live="polite"></p>
+        <div id="assets-cursor"></div>
+      </section>
+
+      <!-- Icons and images customization -->
+      <section class="sb-sec" aria-label="Icons and images">
+        <h3>Icons and images</h3>
+        <p class="hint">
+          Replace any icon with your own image (png, jpg, svg, webp, gif; up to 8 MB). 
+          Files stay in this browser only.
+        </p>
+        <p id="img-msg" class="hint" role="status" aria-live="polite"></p>
+        <div id="assets"></div>
+      </section>
+
+      <!-- Background customizations -->
+      <!-- Board's bg -->
+      <section class="sb-sec" aria-label="Board background">
+        <h3>Board background</h3>
+        <p class="hint">
+          Pick an image or a video (video up to 64 MB). 
+          It sits under the board: hidden cells stay solid, cleared cells show it.
+        </p>
+        <div id="assets-board"></div>
+        <label class="check" id="board-vid-opt" hidden>
+          <input id="board-vid-mute" type="checkbox"> Mute video
+        </label>
+        <label class="vol">Background dimming <output id="out-dim">0%</output>
+          <input id="dim" type="range" min="0" max="80" step="1">
+        </label>
+      </section>
+      <!-- App's bg -->
+      <section class="sb-sec" aria-label="App background">
+        <h3>App background</h3>
+        <p class="hint">
+          Fills the whole page behind everything. 
+          Pick an image or a video (video up to 64 MB). 
+          The page background color shows when none is set. 
+          Video sound uses the Background video slider in the Audio tab.
+        </p>
+        <div id="assets-app"></div>
+        <label class="check" id="app-vid-opt" hidden>
+          <input id="app-vid-mute" type="checkbox"> Mute video
+        </label>
+        <label class="vol">Background dimming <output id="out-appdim">0%</output>
+          <input id="appdim" type="range" min="0" max="80" step="1">
+        </label>
+      </section>
+
+      <!-- Reset every customizations -->
+      <section class="sb-sec" aria-label="Reset appearance">
+        <div class="snd-btns">
+          <button id="theme-reset-all" type="button" class="small">
+            Reset all appearance
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <!-- Animation toggles -->
+    <div id="tab-effects" class="tabpanel" role="tabpanel" aria-labelledby="tab-btn-effects" hidden>
+      <section class="sb-sec" aria-label="Animations">
+        <h3>Animations</h3>
+        <p class="hint">
+          Turn single effects on or off. 
+          Everything also stays off when your system's reduce-motion setting is on.
+        </p>
+        <label class="check">
+          <input id="fx-cell" type="checkbox"> Rock splash when you open a cell
+        </label>
+        <label class="check"><input id="fx-button" type="checkbox"> 
+          Water ripple when you click a button
+        </label>
+        <label class="check"><input id="fx-flag" type="checkbox"> 
+          Flag drop and lift on the board
+        </label>
+        <label class="check"><input id="fx-win" type="checkbox"> 
+          Win animation (confetti, frame pulse, happy face)
+        </label>
+        <label class="check"><input id="fx-lose" type="checkbox"> 
+          Lose animation (explosion, shake, red flash, mines popping)
+        </label>
+      </section>
+    </div>
+  </aside>
+
+  <!-- dims the page behind the sidebar on narrow screens -->
+  <div id="scrim" class="scrim" aria-hidden="true"></div>
+
+  <!-- close button for setting menu -->
+  <button id="settings-close" type="button" class="small" aria-label="Close settings"
+    aria-controls="settings" data-open="false">Close</button>
+
+  <!-- credit popup (opens when the app name is clicked) -->
+  <div id="credit" class="credit" role="dialog" aria-modal="true" aria-labelledby="credit-text" hidden>
+    <div class="credit-card">
+      <h2>Minesweeper</h2>
+      <p id="credit-text">Intellectual property of Nguyen Thien Nhan, HCMUTE-24110114</p>
+      <button id="credit-close" type="button">Close</button>
+    </div>
+  </div>
+
+  <!-- the custom mouse cursor: three pictures, the one for the current state is shown -->
+  <div id="cursor" class="cursor" data-state="normal" aria-hidden="true" hidden>
+    <img data-k="normal" alt="" draggable="false">
+    <img data-k="select" alt="" draggable="false">
+    <img data-k="flag" alt="" draggable="false">
+    <img data-k="hold" alt="" draggable="false">
+    <img data-k="text" alt="" draggable="false">
+  </div>
+
+  <script
+    src="scripts/main.js" defer>
+  </script>
+</body>
+</html>
