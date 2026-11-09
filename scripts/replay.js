@@ -10,7 +10,8 @@
     plays back in a loop on the board, and can be saved as a .misw file (JSON),
     or loaded back from one.
 */
-const MISW_VERSION = 1, SPEEDS = [0.5, 1, 2, 4, 8];
+const MISW_VERSION = 2, MISW_OLDEST = 1, // v1 files (no noGuess field) still load
+     SPEEDS = [0.5, 1, 2, 4, 8];
 let moves = [], replaying = false, rpTimer = 0, rpData = null;
 const rpBadge = $('#rp');
 S.rpSpeed = SPEEDS.includes(+S.rpSpeed) ? +S.rpSpeed : 1;
@@ -31,20 +32,21 @@ function applyTo(game, m) {
 function makeReplay(game, mv, ms) {
     return {
         rows: game.rows, cols: game.cols, mines: game.mines, safety: game.safety, seed: game.seed,
+        noGuess: game.noGuess,
         result: game.status, ms: Math.round(ms || 0), moves: mv.map(m => ({ ...m })),
         created: new Date().toISOString()
     };
 }
 const serializeReplay = d => ({
     format: 'misw', version: MISW_VERSION, app: 'Minesweeper', created: d.created,
-    rows: d.rows, cols: d.cols, mines: d.mines, safety: d.safety, seed: d.seed,
+    rows: d.rows, cols: d.cols, mines: d.mines, safety: d.safety, seed: d.seed, noGuess: !!d.noGuess,
     result: d.result, ms: d.ms, moves: d.moves.map(m => [m.k, m.i, m.t])
 });
 // check a parsed .misw object and replay it on a hidden game; throws a readable error
 function parseReplay(o) {
     if (!o || typeof o !== 'object' || o.format !== 'misw') 
         throw new Error('This is not a .misw replay file.');
-    if (o.version !== MISW_VERSION) 
+    if (!Number.isInteger(o.version) || o.version < MISW_OLDEST || o.version > MISW_VERSION) 
         throw new Error('This replay was made by a different version.');
     const rows = +o.rows, cols = +o.cols, mines = +o.mines, seed = +o.seed;
     if (!Number.isInteger(rows) || !Number.isInteger(cols) 
@@ -65,11 +67,11 @@ function parseReplay(o) {
             throw new Error('This replay contains a broken move.');
         mv.push({ k: a[0], i: a[1], t: Math.round(+a[2]) });
     }
-    const sim = newGame(rows, cols, mines, o.safety, seed);
+    const noGuess = o.noGuess === true, sim = newGame(rows, cols, mines, o.safety, seed, noGuess);
     mv.forEach(m => applyTo(sim, m));
     if (sim.status === 'idle') throw new Error('This replay never opens a cell.');
     return {
-        rows, cols, mines: sim.mines, safety: o.safety, seed, moves: mv,
+        rows, cols, mines: sim.mines, safety: o.safety, seed, noGuess, moves: mv,
         result: sim.status === 'playing' ? 'unfinished' : sim.status, // trust the replay, not the label
         ms: Math.round(Math.max(0, +o.ms) || mv[mv.length - 1].t),
         created: typeof o.created === 'string' ? o.created.slice(0, 40) : new Date().toISOString()
@@ -97,7 +99,7 @@ function playReplay(d) {
 }
 function replayRound(d) {
     if (!replaying) return;
-    g = newGame(d.rows, d.cols, d.mines, d.safety, d.seed);
+    g = newGame(d.rows, d.cols, d.mines, d.safety, d.seed, d.noGuess);
     origin = 0;
     cur = 0;
     if (builtDims !== d.rows + 'x' + d.cols) { // an imported replay can have another board size
@@ -163,7 +165,7 @@ function paintReplay() {
     const d = rpData;
     rpEl.info.textContent = !d
         ? 'Finished games are saved here automatically. You can also import a .misw file.'
-        : (replaying ? 'Playing: ' : 'Saved: ') + d.rows + '×' + d.cols + ' board, ' + d.mines + ' mines, ' 
+        : (replaying ? 'Playing: ' : 'Saved: ') + d.rows + '×' + d.cols + (d.noGuess ? ' no-guess' : '') + ' board, ' + d.mines + ' mines, ' 
           + d.moves.length + ' moves, '
           + (d.result === 'won' ? 'cleared in ' + fmtSec(d.ms) : d.result === 'lost' ? 'lost after ' + fmtSec(d.ms) 
             : 'unfinished') + '.';
@@ -238,6 +240,9 @@ function act(fn, snd, mv) {
     if (before === 'idle' && g.status !== 'idle') {
         t0 = performance.now();
         tick = setInterval(clock, 100);
+        // no-guess mode could not find a fully logical board (very dense setups): say so
+        if (g.ng && !g.ng.ok) 
+            $('#msg').textContent = 'No guess-free board found for this setup, so this one may need a guess.';
     }
     if (mv && (g.rev !== rev0 || g.flags !== flags0 || g.status !== before)) {
         recordMove(mv, origin, before);

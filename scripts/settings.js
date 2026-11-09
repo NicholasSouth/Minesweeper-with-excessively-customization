@@ -40,6 +40,7 @@ const S = Object.assign({
     pct: 15.6,
     mode: 'count',
     safety: 'zone',
+    noGuess: true,
     theme: null,
     muted: false
 }, store.get('settings', {}));
@@ -48,6 +49,7 @@ S.cols = num(S.cols, 5, 50, 16);
 if (!['beginner', 'intermediate', 'expert', 'custom'].includes(S.difficulty)) 
     S.difficulty = 'beginner';
 if (!RES[S.safety]) S.safety = 'zone';
+S.noGuess = S.noGuess !== false;
 S.mines = clampMines(S.mines, S.rows, S.cols, S.safety);
 {
     const sv = S.vol || {};

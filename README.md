@@ -1,4 +1,4 @@
-# Minesweeper (with excessive customization) v2.0
+# Minesweeper (with excessive customization) v3.0
 
 A browser Minesweeper with a lot of knobs: custom boards, a movable and resizable board, zoom, themes, fonts, sounds, cursors, backgrounds, rebindable keys, and a replay of every finished game that you can save, share and load.
 
@@ -8,7 +8,15 @@ No install, no build step, no account. Everything runs in your browser.
 
 ---
 
-## What's new in v2.0
+## What's new in v3.0
+
+- **No-guess boards (new default):** mines are dealt, then checked by a built-in logic solver; if the board can't be cleared by logic alone, it is re-dealt until one can. Every number you need can be deduced, so no move is ever a coin flip. Choose **Classic (random)** under **Boards** in the setup panel for the old behaviour. See [No-guess mode](#no-guess-mode).
+- **App icon:** the page now uses `assets/app-icon.ico` as its browser tab icon.
+- **Replay files:** `.misw` files now record the board type (format v2). Older v1 files still load as classic boards.
+- **Records kept apart:** best times are tracked separately for no-guess and classic boards.
+
+<details>
+<summary>Previous version: v2.0</summary>
 
 - **Rebind every key:** the new **Keys** tab in Settings lets you change the keyboard controls. Each action has two slots, click a slot and press the key you want. Backspace clears a slot, Esc cancels, and **Reset keys** brings the defaults back. If a key is already used by another action, it is taken from that action and you are told which one.
 - **Scroll lock (`L`):** locks the page and the settings bar so nothing scrolls except the board, which still pans and zooms. A small badge shows while it is on. Press `L` again to unlock.
@@ -20,8 +28,10 @@ No install, no build step, no account. Everything runs in your browser.
 - **Code split into small scripts:** the old single `main.js` is now 22 smaller files in `scripts/`, each with one job (engine, board, input, replay, keys, audio, fonts and so on). See [Running it locally](#running-it-locally).
 - Updated the on-page help text and the keyboard table to match the new keys.
 
+</details>
+
 <details>
-<summary>Previous version: v1.1</summary>
+<summary>Earlier version: v1.1</summary>
 
 - **Replay section** under the board: watch your last game in a loop with a VHS look, change the speed, **export it as a `.misw` file** and **import** any `.misw` file to watch it.
 - **Boards fit the screen:** Intermediate and Expert now pick a cell size that shows the whole board without scrollbars.
@@ -64,7 +74,8 @@ Clicking a flagged cell removes the flag and opens the cell. **Flag mode** turns
 - **Custom boards:** set rows, columns and mines directly, by percentage, or with the slider. **Edit as custom** copies the current preset into the custom fields.
 - **Difficulty readout** with a warning when the mine density is above 35%, where most boards can't be solved without guessing.
 - **First-click protection:** Safe zone (3x3), Safe cell, or No protection.
-- **Best time** is remembered for each board setup.
+- **Boards:** **No guessing (solvable)** (default) or **Classic (random)**.
+- **Best time** is remembered for each board setup, kept apart for no-guess and classic boards.
 - **Face button** reacts to your clicks and to winning or losing.
 
 ### Board
@@ -76,6 +87,13 @@ Clicking a flagged cell removes the flag and opens the cell. **Flag mode** turns
 - **Chording** and **flag mode** for fast play.
 - **Full keyboard play** with a visible keyboard cursor.
 - **Scroll lock** so the page stays still while you play with the keyboard.
+
+### No-guess mode
+- After your first click, the game deals a layout and plays it with logic only (no guessing): a number whose mines are all found frees its other neighbours, a number whose hidden cells are all mines marks them, two overlapping numbers are compared (subset rule), and the total mine count is used at the end. If that clears the whole board, you get it. If not, the mines are re-dealt (up to 4000 tries) and checked again.
+- The solver is sound: it never calls a board solvable when it needs a guess. It is not complete, so a few guess-free boards that need very advanced reasoning are skipped.
+- Typical cost is a few milliseconds. Beginner and Intermediate almost always succeed on the first try or two, Expert needs about 20 tries with Safe zone, and more with Safe cell or No protection (still well under a second).
+- **Very dense custom boards** (roughly 20% mines on big boards and up) may not have a guess-free layout within the limit. Then the game uses the layout that logic got furthest on and shows a message that this board may need a guess.
+- It is deterministic: the same seed and first click always give the same board, so replays still match exactly.
 
 ### Keys
 - Every action has **two key slots**: move up/down/left/right, open cell, flag, chord, jump to board, lock scroll, new game, zoom in, zoom out, reset view, reset layout.
@@ -90,7 +108,7 @@ Every move you make (open, flag, chord) is recorded. The **Replay** section unde
 - **Watch replay / Stop replay:** plays the last finished game on the board in a loop with a VHS-style effect (scanlines, tracking bar, grain, colour fringing, a blinking PLAY label). Stop replay (or New game) deals a fresh board.
 - **Replay automatically when a game ends:** on by default; untick it if you'd rather start the replay yourself.
 - **Speed:** 0.5×, 1×, 2×, 4× or 8×.
-- **Export .misw:** saves the replay as a small `.misw` file (it is plain JSON: board size, mines, first-click mode, the random seed and the list of moves).
+- **Export .misw:** saves the replay as a small `.misw` file (it is plain JSON: board size, mines, first-click mode, board type, the random seed and the list of moves). Files from older versions (format v1) still load as classic boards.
 - **Import .misw:** loads a `.misw` file and plays it, even if it was made on another board size or by someone else. Files are checked first, so a broken or foreign file gives an error message instead of a broken board.
 - The last replay is kept in your browser, so it is still there after a reload.
 
@@ -144,7 +162,7 @@ It is plain HTML, CSS and JavaScript. Open `index.html` in a browser, or serve t
 index.html
 styles/main.css
 scripts/    one file per job, loaded by index.html in this order:
-              engine.js        game rules (mines, reveal, chord, win/lose)
+              engine.js        game rules (mines, reveal, chord, win/lose) and the no-guess solver
               settings.js      saved settings and defaults
               audio.js         sound effects and music playback
               shell.js         shared helpers, app background video, header
@@ -166,7 +184,7 @@ scripts/    one file per job, loaded by index.html in this order:
               credits.js       credits popup
               boot.js          restores saved uploads and starts the first game
 fonts/      TwofiftysixbytesRegular-5yD0j.otf, Ithaca-LVB75.ttf
-assets/     icons, cursors and images
+assets/     icons, cursors and images, app-icon.ico (browser tab icon)
 audio/      sound effects, Joakim_Karud_-_Classic.mp3, Dj_Quads_-_Dreams.mp3
 ```
 

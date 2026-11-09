@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Minesweeper</title>
+  <link rel="icon" href="assets/app-icon.ico" sizes="any">
   <link rel="stylesheet" href="styles/main.css">
 </head>
 <body>
@@ -54,7 +55,7 @@
       <p id="sum"></p>
       <p id="warn" hidden>
         <strong>Warning:</strong> 
-        above 35% mines, most boards can't be solved without guessing.
+        above 35% mines, most boards can't be solved without guessing, so No guessing mode may fall back to a random board.
       </p>
       <div class="row">
         <!-- how the first click should work to prevent loosing in the first try-->
@@ -63,6 +64,13 @@
             <option value="zone">Safe zone (3×3)</option>
             <option value="cell">Safe cell</option>
             <option value="none">No protection</option>
+          </select>
+        </label>
+        <!-- no-guess: mines are re-dealt until logic alone can clear the board -->
+        <label>Boards 
+          <select id="noguess">
+            <option value="on">No guessing (solvable)</option>
+            <option value="off">Classic (random)</option>
           </select>
         </label>
         <!-- to fast change to custom difficulty -->

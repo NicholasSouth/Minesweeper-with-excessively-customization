@@ -107,7 +107,7 @@ function start() {
     clearInterval(tick);
     stopReplay();
     moves = [];
-    g = newGame(r, c, m, S.safety, (Math.random() * 4294967296) >>> 0);
+    g = newGame(r, c, m, S.safety, (Math.random() * 4294967296) >>> 0, S.noGuess);
     cur = 0;
     const dims = r + 'x' + c;
     if (dims !== lastDims) {
@@ -152,7 +152,7 @@ function end() {
 }
 
 /* --- info line: message + best time --- */
-const boardKey = () => g.rows + 'x' + g.cols + 'x' + g.mines;
+const boardKey = () => g.rows + 'x' + g.cols + 'x' + g.mines + (g.noGuess ? 'ng' : ''); // records are kept apart per board type
 function showBest() {
     const b = store.get('stats', { byBoard: {} }).byBoard[boardKey()];
     $('#best').textContent = b && b.bestMs != null ? 'Best on this board: ' + 

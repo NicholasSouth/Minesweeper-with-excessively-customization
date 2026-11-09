@@ -13,6 +13,7 @@ const F = {
     sum: $('#sum'),
     warn: $('#warn'),
     safety: $('#safety'),
+    ng: $('#noguess'),
     edit: $('#edit')
 };
 const PRE = { beginner: [9, 9, 10], intermediate: [16, 16, 40], expert: [16, 30, 99] };
@@ -41,6 +42,7 @@ function sync(skip) { // refresh every field except `skip` (the one being typed 
     F.edit.hidden = !pre;
     F.diff.value = S.difficulty;
     F.safety.value = S.safety;
+    F.ng.value = S.noGuess ? 'on' : 'off';
     F.sum.textContent = m + ' mines = ' + fmtPct(p) + '% of ' + (r * c) + 
                         ' cells · ' + label(p) + ' · allowed 1 to ' + mx;
     F.warn.hidden = p <= 35;
@@ -94,6 +96,12 @@ F.safety.onchange = () => {
     resize();
     sync();
     sfx('ui');
+};
+F.ng.onchange = () => {
+    S.noGuess = F.ng.value === 'on';
+    sync();
+    sfx('ui');
+    start(); // the board type changes the records, so deal a new board
 };
 F.edit.onclick = () => {
     const { r, c, m } = cfg();
