@@ -35,6 +35,17 @@
     --font-ui: "Two Fifty Six Bytes", monospace; /* scripts can override */
     --font-num: "Two Fifty Six Bytes", monospace; /* scripts can override */
     --cursz: 40px; /* custom cursor size, set from scripts too */
+    --sbsz: 10px; /* scrollbar thickness, set from scripts */
+    /* VHS replay look: same in every theme (tape colors, not palette colors) */
+    --vhs-scan: rgba(0, 0, 0, .22);          /* scanlines */
+    --vhs-vignette: rgba(0, 0, 0, .35);      /* dark screen edges */
+    --vhs-bar: rgba(255, 255, 255, .13);     /* rolling tracking bar */
+    --vhs-text: #fff;                        /* PLAY label */
+    --vhs-glow: rgba(255, 255, 255, .5);     /* PLAY label glow */
+    --vhs-red: rgba(255, 0, 60, .8);         /* red fringe on the label */
+    --vhs-cyan: rgba(0, 220, 255, .8);       /* cyan fringe on the label */
+    --vhs-red-soft: rgba(255, 0, 60, .4);    /* red fringe on the board */
+    --vhs-cyan-soft: rgba(0, 220, 255, .4);  /* cyan fringe on the board */
 }
 /* 
     A theme is a palette on any element with data-theme (<html> and each header dot).
@@ -58,6 +69,7 @@
     --warnt: #ffcc66;
     --n1: #8fd3ff; --n2: #7be0a4; --n3: #ff8a8a; --n4: #b6a6ff;
     --n5: #ffb86b; --n6: #5fe0d0; --n7: #e6edf2; --n8: #9fb0bd;
+    --sbthumb: #2c6e8f; --sbtrack: #0e1d28; /* scrollbar */
 }
 [data-theme="lust"] {
     --bg: #070508; --surface: #141018; --text: #f4eaf3; --muted: #a995a8;
@@ -65,6 +77,7 @@
     --danger: #ff5c7a;
     --n1: #9ec5ff; --n2: #86e3a5; --n3: #ff8fa8; --n4: #c3a9ff;
     --n5: #ffbe7a; --n6: #6fe6d6; --n7: #ece6ee; --n8: #a995a8;
+    --sbthumb: #8a3a78; --sbtrack: #0d0a11;
 }
 [data-theme="combust"] {
     --bg: #090807; --surface: #16120f; --text: #f3ede6; --muted: #a39a90;
@@ -72,6 +85,7 @@
     --danger: #ff5a4a;
     --n1: #9ccbff; --n2: #8be0a0; --n3: #ff8b82; --n4: #bba8ff;
     --n5: #ffc27a; --n6: #6fe0cf; --n7: #eee9e3; --n8: #a39a90;
+    --sbthumb: #a8601c; --sbtrack: #0e0c0a;
 }
 [data-theme="ethereal"] {
     color-scheme: light;
@@ -83,6 +97,7 @@
     --warnbg: #fff1c9; --warnt: #6b4b00;
     --n1: #1d4fb8; --n2: #1d7a35; --n3: #b32424; --n4: #3d2391;
     --n5: #8e3f0a; --n6: #00707a; --n7: #24211b; --n8: #4d493f;
+    --sbthumb: #6f6a5e; --sbtrack: #b0ab9e;
 }
 
 /* Shared objects: base, controls, button ripple */
@@ -734,8 +749,8 @@ h1 {
     overflow: hidden;
     pointer-events: none;
     background:
-        repeating-linear-gradient(to bottom, rgba(0, 0, 0, .22) 0 1px, transparent 1px 3px),
-        radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, .35) 100%);
+        repeating-linear-gradient(to bottom, var(--vhs-scan) 0 1px, transparent 1px 3px),
+        radial-gradient(ellipse at center, transparent 55%, var(--vhs-vignette) 100%);
 }
 .frame.vhs-on .vhs::before { /* grain */
     content: '';
@@ -752,7 +767,7 @@ h1 {
     right: 0;
     top: -20%;
     height: 14%;
-    background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, .13), transparent);
+    background: linear-gradient(to bottom, transparent, var(--vhs-bar), transparent);
     backdrop-filter: blur(1.5px) brightness(1.2);
     animation: vhs-roll 4.5s linear infinite;
 }
@@ -762,13 +777,13 @@ h1 {
     top: 14px;
     font: 700 1rem/1 var(--font-num);
     letter-spacing: .12em;
-    color: #fff;
-    text-shadow: 2px 0 rgba(255, 0, 60, .8), -2px 0 rgba(0, 220, 255, .8), 0 0 6px rgba(255, 255, 255, .5);
+    color: var(--vhs-text);
+    text-shadow: 2px 0 var(--vhs-red), -2px 0 var(--vhs-cyan), 0 0 6px var(--vhs-glow);
     animation: vhs-blink 1.4s steps(1) infinite;
 }
 .frame.vhs-on .wrap {
     filter: saturate(1.35) contrast(1.08) blur(.3px)
-            drop-shadow(2px 0 0 rgba(255, 0, 60, .4)) drop-shadow(-2px 0 0 rgba(0, 220, 255, .4));
+            drop-shadow(2px 0 0 var(--vhs-red-soft)) drop-shadow(-2px 0 0 var(--vhs-cyan-soft));
     animation: vhs-jitter .9s steps(1) infinite;
 }
 @keyframes vhs-noise {
@@ -812,8 +827,8 @@ h1 {
 
 /* Settings sidebar */
 /* retractable right bar; closed = slid off-screen + visibility:hidden (leaves the tab order) */
+:root { --sb-w: min(calc(100vw - 58px), 440px); } /* leaves room for the close button on phones */
 .settings {
-    --sb-w: min(calc(100vw - 58px), 340px); /* leaves room for the close button on phones */
     position: fixed;
     top: 0;
     right: 0;
@@ -857,7 +872,7 @@ h1 {
 #settings-close {
     position: fixed;
     top: calc(12px + env(safe-area-inset-top, 0px));
-    right: calc(min(100vw - 58px, 340px) + 10px); /* = sidebar width + 10px gap */
+    right: calc(var(--sb-w) + 10px); /* = sidebar width + 10px gap */
     z-index: 21; /* above the sidebar and the scrim */
     width: 38px;
     height: 38px;
@@ -867,7 +882,7 @@ h1 {
     background: var(--hid) url("../assets/x.png") center / 50% no-repeat;
     box-shadow: 0 4px 14px -4px var(--shadow);
     /* closed: parked off-screen to the right (where the sidebar waits), not focusable */
-    transform: translateX(calc(min(100vw - 58px, 340px) + 60px));
+    transform: translateX(calc(var(--sb-w) + 60px));
     opacity: 0;
     visibility: hidden;
     transition: transform .4s cubic-bezier(.22, 1, .36, 1), opacity .25s ease, 
@@ -1087,3 +1102,57 @@ html.fakecur, html.fakecur * { cursor: none !important; }
         transition-duration: .01ms !important;
     }
 }
+/* scroll lock (L): the page and sidebar stop scrolling, the board window still pans */
+html.locked, html.locked body { overflow: hidden; overscroll-behavior: none; }
+html.locked { padding-right: var(--sbw, 0px); } /* replaces the vanished page scrollbar */
+html.locked .settings { overflow-y: hidden; }
+.settings { scrollbar-gutter: stable; } /* the sidebar does not shift when its scrollbar hides */
+.lockbadge {
+    position: fixed;
+    left: 50%;
+    bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%);
+    z-index: 25;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--bg);
+    font-size: .8rem;
+    font-weight: 600;
+    box-shadow: 0 4px 14px -4px var(--shadow);
+    pointer-events: none;
+    white-space: nowrap;
+}
+.lockbadge[hidden] { display: none; }
+.lockbadge kbd { font: inherit; padding: 0 6px; border-radius: 6px; background: var(--bg); color: var(--text); }
+
+/* Scrollbars: slim, in the theme colors (Settings > Theme > Scrollbars changes them) */
+*::-webkit-scrollbar { width: var(--sbsz); height: var(--sbsz); }
+*::-webkit-scrollbar-track,
+*::-webkit-scrollbar-corner { background: var(--sbtrack); }
+*::-webkit-scrollbar-thumb {
+    background: var(--sbthumb);
+    border-radius: 999px;
+    /* the track color rings the thumb so it looks inset */
+    border: 1px solid var(--sbtrack);
+}
+*::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+/* Firefox only knows thin / auto, so sizes up to 8 px map to thin */
+@supports (-moz-appearance: none) {
+    html { scrollbar-color: var(--sbthumb) var(--sbtrack); }
+    html[data-sb="thin"] * { scrollbar-width: thin; }
+}
+
+/* Keys tab: groups are .sb-sec like the other tabs; rows match the .snd rows */
+.keys { display: grid; gap: 0; }
+.keyrow {
+    display: grid;
+    grid-template-columns: 1fr 6.5rem 6.5rem;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 0;
+    border-top: 1px solid var(--line);
+}
+.keylabel { font-weight: 600; font-size: .9rem; min-width: 0; }
+.keyslot { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.keyslot[aria-pressed=true] { border-color: var(--accent); color: var(--accent); }

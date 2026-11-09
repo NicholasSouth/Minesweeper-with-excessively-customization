@@ -1,6 +1,6 @@
-# Minesweeper (with excessive customization) v1.1
+# Minesweeper (with excessive customization) v2.0
 
-A browser Minesweeper with a lot of knobs: custom boards, a movable and resizable board, zoom, themes, fonts, sounds, cursors, backgrounds, and a replay of every finished game that you can save, share and load.
+A browser Minesweeper with a lot of knobs: custom boards, a movable and resizable board, zoom, themes, fonts, sounds, cursors, backgrounds, rebindable keys, and a replay of every finished game that you can save, share and load.
 
 **Play it:** https://nicholassouth.github.io/Minesweeper-with-excessively-customization/
 
@@ -8,33 +8,52 @@ No install, no build step, no account. Everything runs in your browser.
 
 ---
 
-## What's new in v1.1
+## What's new in v2.0
+
+- **Rebind every key:** the new **Keys** tab in Settings lets you change the keyboard controls. Each action has two slots, click a slot and press the key you want. Backspace clears a slot, Esc cancels, and **Reset keys** brings the defaults back. If a key is already used by another action, it is taken from that action and you are told which one.
+- **Scroll lock (`L`):** locks the page and the settings bar so nothing scrolls except the board, which still pans and zooms. A small badge shows while it is on. Press `L` again to unlock.
+- **Chord with `C`:** `C` chords on the board. Pressed from anywhere else, it jumps back to the board (to your last cell, or the first one), so you can use the keyboard without reaching for the mouse. Both actions can share a key and each is also rebindable.
+- **Reset keys changed:** reset view is now `1` (it was `0`) and reset layout is `2`.
+- **Styled scrollbars:** slim scrollbars in the theme colors, with a new **Scrollbars** section in Settings > Theme to change the thumb color, track color and thickness (4 to 16 px). Colors are kept per theme. The thumb lights up in the accent color on hover.
+- **Restyled settings menu:** the sidebar has a new look, with tabs (Audio, Theme, Effects, Keys), grouped sections that glide in when you open the menu or switch tab, a close button, and a dimmed background on narrow screens.
+- **No more hardcoded colors in the VHS replay:** the scanlines, vignette, tracking bar, PLAY label and its red/cyan fringe now come from CSS variables instead of fixed values in the rules, so the look is defined in one place and easy to tweak.
+- **Code split into small scripts:** the old single `main.js` is now 22 smaller files in `scripts/`, each with one job (engine, board, input, replay, keys, audio, fonts and so on). See [Running it locally](#running-it-locally).
+- Updated the on-page help text and the keyboard table to match the new keys.
+
+<details>
+<summary>Previous version: v1.1</summary>
 
 - **Replay section** under the board: watch your last game in a loop with a VHS look, change the speed, **export it as a `.misw` file** and **import** any `.misw` file to watch it.
 - **Boards fit the screen:** Intermediate and Expert now pick a cell size that shows the whole board without scrollbars.
 - **Font size sliders**, with a default size for each font, and a bigger app text by default.
-- **New fonts:** the font list is now Two Fifty Six Bytes (default), Times New Roman, Consolas, Segoe UI, Ithaca and Comic Sans MS, and the fonts that ship with the site are free to use (see [Credits and licenses](#credits-and-licenses)).
-- **New music:** two background tracks to choose from, **Classic** (default) and **Dreams**. You can still upload your own.
+- **New fonts:** Two Fifty Six Bytes (default), Times New Roman, Consolas, Segoe UI, Ithaca and Comic Sans MS. The fonts that ship with the site are free to use (see [Credits and licenses](#credits-and-licenses)).
+- **New music:** two background tracks, **Classic** (default) and **Dreams**. You can still upload your own.
 - **Credits** for all music and fonts, in this README and in the in-app credits popup (click the app name).
 - Replaced the previous background music and the Twobit and Minecraft fonts with the music and fonts credited below.
+
+</details>
 
 ---
 
 ## How to play
 
-| Action | Mouse / touch | Keyboard |
+The keyboard keys below are the **defaults**. You can change all of them in **Settings > Keys**.
+
+| Action | Mouse / touch | Default key |
 |---|---|---|
 | Open a cell | Left-click or tap | `D` or `Space` |
 | Flag a cell | Right-click or long-press | `F` |
 | Chord (open all neighbours of a satisfied number) | Click the number | `C` |
+| Jump back to the board | | `C` (when the focus is not on the board) |
 | Move the keyboard cursor | | Arrow keys |
+| Lock / unlock scrolling | | `L` |
 | New game | Face button or **New game** | `R` |
-| Zoom in / out | `+` / `-` buttons, Ctrl + wheel, pinch | `+` / `-` |
-| Reset zoom | **Reset view** | `0` |
+| Zoom in / out | `+` / `-` buttons, Ctrl + wheel, pinch | `+` or `=` / `-` or `_` |
+| Reset zoom | **Reset view** | `1` |
+| Reset board position and size | **Reset layout**, or double-click the grip bar | `2` (or `Home` on the grip bar) |
 | Move the board | Drag the grip bar above it | Arrow keys on the grip bar |
-| Reset board position and size | **Reset layout**, or double-click the grip bar | `Home` on the grip bar |
 
-Clicking a flagged cell removes the flag and opens the cell. **Flag mode** turns every tap into a flag, which is handy on touch screens.
+Clicking a flagged cell removes the flag and opens the cell. **Flag mode** turns every tap into a flag, which is handy on touch screens. Keys work from anywhere on the page except while you are typing in a text box.
 
 ---
 
@@ -56,6 +75,15 @@ Clicking a flagged cell removes the flag and opens the cell. **Flag mode** turns
 - **Resizable board:** drag the corner handle.
 - **Chording** and **flag mode** for fast play.
 - **Full keyboard play** with a visible keyboard cursor.
+- **Scroll lock** so the page stays still while you play with the keyboard.
+
+### Keys
+- Every action has **two key slots**: move up/down/left/right, open cell, flag, chord, jump to board, lock scroll, new game, zoom in, zoom out, reset view, reset layout.
+- Actions are grouped as **Movement**, **Actions** and **View**.
+- Click a slot and press a key to set it. **Backspace** clears the slot, **Esc** (or clicking away) cancels.
+- Keys that would break the page (Tab, Esc, Enter, Backspace, Delete and modifier keys) can't be assigned. Ctrl, Cmd and Alt combinations are ignored so browser shortcuts keep working.
+- Chord and Jump to board are the only pair that may share a key.
+- Your bindings are saved in your browser. **Reset keys** restores the defaults.
 
 ### Replay
 Every move you make (open, flag, chord) is recorded. The **Replay** section under the board is where you use it:
@@ -66,9 +94,13 @@ Every move you make (open, flag, chord) is recorded. The **Replay** section unde
 - **Import .misw:** loads a `.misw` file and plays it, even if it was made on another board size or by someone else. Files are checked first, so a broken or foreign file gives an error message instead of a broken board.
 - The last replay is kept in your browser, so it is still there after a reload.
 
+### Settings menu
+A slide-out bar on the right with four tabs: **Audio**, **Theme**, **Effects** and **Keys**. Sections glide in as you open the bar or switch tab, and on narrow screens the page behind it is dimmed. The Lock and Jump-to-board keys also close it.
+
 ### Themes and colours
 - Four built-in themes: **Novel**, **Lust**, **Combust**, **Ethereal**. Switch with the dots in the header.
 - **Edit any colour** of the current theme. Each theme keeps its own colours, with a reset button.
+- **Scrollbars:** edit the thumb and track colours (kept per theme) and the thickness (4 to 16 px), with its own reset button. Firefox only supports a thin and a normal width, so there sizes up to 8 px are thin.
 
 ### Fonts
 - Choose the app font and the board/counter font separately from: **Two Fifty Six Bytes** (default), **Times New Roman**, **Consolas**, **Segoe UI**, **Ithaca**, **Comic Sans MS**. Two Fifty Six Bytes and Ithaca ship with the site; the other four use the font installed on your device (Windows and macOS usually have them).
@@ -98,7 +130,7 @@ Everything also stays off when your system's **reduce motion** setting is on.
 
 ### Other
 - **Responsive** layout that works on phones and tablets as well as desktops.
-- **Everything is saved in your browser:** settings, colours, fonts, uploads and best times stay on your device. Nothing is sent to a server, and other visitors never see your changes.
+- **Everything is saved in your browser:** settings, colours, key bindings, fonts, uploads and best times stay on your device. Nothing is sent to a server, and other visitors never see your changes.
 - **Reset all appearance** puts colours, fonts, icons and backgrounds back to the defaults.
 - Click the app name in the header for the credits.
 
@@ -111,7 +143,28 @@ It is plain HTML, CSS and JavaScript. Open `index.html` in a browser, or serve t
 ```
 index.html
 styles/main.css
-scripts/main.js
+scripts/    one file per job, loaded by index.html in this order:
+              engine.js        game rules (mines, reveal, chord, win/lose)
+              settings.js      saved settings and defaults
+              audio.js         sound effects and music playback
+              shell.js         shared helpers, app background video, header
+              setup.js         game setup panel
+              layout.js        movable / resizable board
+              hud-zoom.js      mine counter, timer, zoom
+              board.js         building and drawing the board
+              replay.js        recording, VHS replay, .misw export / import
+              keys.js          key bindings and the Keys tab
+              board-input.js   scroll lock, mouse, touch and keyboard input
+              effects.js       animations and the Effects tab
+              sidebar.js       the settings bar and its tabs
+              audio-tab.js     Audio tab
+              theme-colors.js  Theme tab: colours and scrollbars
+              fonts.js         fonts and font upload
+              assets.js        replaceable icons and images
+              cursor.js        custom cursors
+              backgrounds.js   board and app backgrounds
+              credits.js       credits popup
+              boot.js          restores saved uploads and starts the first game
 fonts/      TwofiftysixbytesRegular-5yD0j.otf, Ithaca-LVB75.ttf
 assets/     icons, cursors and images
 audio/      sound effects, Joakim_Karud_-_Classic.mp3, Dj_Quads_-_Dreams.mp3
