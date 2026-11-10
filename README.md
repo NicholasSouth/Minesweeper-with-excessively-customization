@@ -1,4 +1,4 @@
-# Minesweeper (with excessive customization) v3.1
+# Minesweeper (with excessive customization) v3.2
 
 A browser Minesweeper with a lot of knobs: custom boards, a movable and resizable board, zoom, themes, fonts, sounds, cursors, backgrounds, rebindable keys, and a replay of every finished game that you can save, share and load.
 
@@ -8,16 +8,24 @@ No install, no build step, no account. Everything runs in your browser.
 
 ---
 
-## What's new in v3.1
+## What's new in v3.2
+
+- **One key for chord, one key for the board:** there is no separate chord key any more. **`D` / `Space` (Open cell) now also chords** when the cursor is on an opened number, the same as clicking it. **`C` is now "Jump to board, lock / unlock view"**: it brings the keyboard back to the board and locks scrolling in one press (it also closes the settings menu); press `C` again to unlock. The separate **Chord** and **Lock** actions are gone from Settings > Keys, and the lock badge shows whichever key you bound to Jump to board. A key you had saved for Jump to board is kept.
+- **Steady HUD:** the mine counter, face and timer no longer shift as the numbers change or when you switch fonts. The face now sits in the exact centre, and the counter and timer have a fixed width.
+
+<details>
+<summary>Previous version: v3.1</summary>
 
 - **`S` opens and closes the settings menu** (it still closes with Esc and the close button). Closing with `S` hands the keyboard back to the board, so you can keep playing.
 - **`M` mutes and unmutes** the sound, the same as the speaker button in the header.
-- **Both keys are rebindable** in Settings > Keys, under View. If you had already used `S` or `M` for another action, that action keeps its key and the new one starts empty.
-- **Scroll lock fix:** the page could still shift while locked, usually right after a win or a loss. The browser pulls the scroll position up when the page gets shorter (for example when the result message disappears as the replay starts), and code that focuses or scrolls to an element can move the page even with `overflow: hidden`. While locked, the page height is now held and any page scroll is put straight back.
-- **New board resets the view:** starting a new game puts the keyboard cursor on the first cell and pans the board window back to the top-left, so the cursor is visible and the next arrow key or zoom doesn't make the board jump. Your zoom level is kept on a same-size board. Watching a replay leaves your cursor where it was.
+- **Both keys are rebindable** in Settings > Keys, under View.
+- **Scroll lock fix:** the page height is held while locked and any page scroll is put straight back.
+- **New board resets the view:** starting a new game puts the keyboard cursor on the first cell and pans the board window back to the top-left.
+
+</details>
 
 <details>
-<summary>Previous version: v3.0</summary>
+<summary>Earlier version: v3.0</summary>
 
 - **No-guess boards (new default):** mines are dealt, then checked by a built-in logic solver; if the board can't be cleared by logic alone, it is re-dealt until one can. Every number you need can be deduced, so no move is ever a coin flip. Choose **Classic (random)** under **Boards** in the setup panel for the old behaviour. See [No-guess mode](#no-guess-mode).
 - **App icon:** the page now uses `assets/app-icon.ico` as its browser tab icon.
@@ -62,12 +70,11 @@ The keyboard keys below are the **defaults**. You can change all of them in **Se
 
 | Action | Mouse / touch | Default key |
 |---|---|---|
-| Open a cell | Left-click or tap | `D` or `Space` |
+| Open a cell (or chord, on an opened number) | Left-click or tap | `D` or `Space` |
 | Flag a cell | Right-click or long-press | `F` |
-| Chord (open all neighbours of a satisfied number) | Click the number | `C` |
-| Jump back to the board | | `C` (when the focus is not on the board) |
+| Chord (open all neighbours of a satisfied number) | Click the number | `D` or `Space` on the number |
 | Move the keyboard cursor | | Arrow keys |
-| Lock / unlock scrolling | | `L` |
+| Jump back to the board and lock / unlock scrolling | | `C` |
 | Open / close settings | Gear button | `S` |
 | Mute / unmute | Speaker button | `M` |
 | New game | Face button or **New game** | `R` |
@@ -97,9 +104,9 @@ Clicking a flagged cell removes the flag and opens the cell. **Flag mode** turns
 - **Zoom** with buttons, Ctrl + wheel, trackpad or touch pinch, or the keyboard. Drag the board to pan.
 - **Movable board:** drag the grip bar to place it anywhere.
 - **Resizable board:** drag the corner handle.
-- **Chording** and **flag mode** for fast play.
+- **Chording** (click a number, or `D` / `Space` on it) and **flag mode** for fast play.
 - **Full keyboard play** with a visible keyboard cursor.
-- **Scroll lock** so the page stays still while you play with the keyboard. The page position and height are frozen while it is on, so nothing moves after a win or loss.
+- **Scroll lock** (`C`) so the page stays still while you play with the keyboard. The page position and height are frozen while it is on, so nothing moves after a win or loss.
 
 ### No-guess mode
 - After your first click, the game deals a layout and plays it with logic only (no guessing): a number whose mines are all found frees its other neighbours, a number whose hidden cells are all mines marks them, two overlapping numbers are compared (subset rule), and the total mine count is used at the end. If that clears the whole board, you get it. If not, the mines are re-dealt (up to 4000 tries) and checked again.
@@ -109,11 +116,10 @@ Clicking a flagged cell removes the flag and opens the cell. **Flag mode** turns
 - It is deterministic: the same seed and first click always give the same board, so replays still match exactly.
 
 ### Keys
-- Every action has **two key slots**: move up/down/left/right, open cell, flag, chord, jump to board, lock scroll, open / close settings, mute, new game, zoom in, zoom out, reset view, reset layout.
+- Every action has **two key slots**: move up/down/left/right, open cell (also chords), flag, jump to board and lock / unlock view, open / close settings, mute, new game, zoom in, zoom out, reset view, reset layout.
 - Actions are grouped as **Movement**, **Actions** and **View**.
 - Click a slot and press a key to set it. **Backspace** clears the slot, **Esc** (or clicking away) cancels.
 - Keys that would break the page (Tab, Esc, Enter, Backspace, Delete and modifier keys) can't be assigned. Ctrl, Cmd and Alt combinations are ignored so browser shortcuts keep working.
-- Chord and Jump to board are the only pair that may share a key.
 - Your bindings are saved in your browser. **Reset keys** restores the defaults.
 
 ### Replay
@@ -126,7 +132,7 @@ Every move you make (open, flag, chord) is recorded. The **Replay** section unde
 - The last replay is kept in your browser, so it is still there after a reload.
 
 ### Settings menu
-A slide-out bar on the right (open and close it with the gear button, `S` or Esc) with four tabs: **Audio**, **Theme**, **Effects** and **Keys**. Sections glide in as you open the bar or switch tab, and on narrow screens the page behind it is dimmed. The Lock and Jump-to-board keys also close it.
+A slide-out bar on the right (open and close it with the gear button, `S` or Esc) with four tabs: **Audio**, **Theme**, **Effects** and **Keys**. Sections glide in as you open the bar or switch tab, and on narrow screens the page behind it is dimmed. The Jump-to-board key also closes it.
 
 ### Themes and colours
 - Four built-in themes: **Novel**, **Lust**, **Combust**, **Ethereal**. Switch with the dots in the header.

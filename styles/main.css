@@ -406,16 +406,22 @@ h1 {
 .frame.moving .grip { cursor: grabbing; opacity: 1; background-color: var(--rev); }
 /* hud: mines left, face, timer */
 .hud {
-    display: flex;
+    /* three columns: the two outer ones are equal, so the face stays dead centre
+       however wide the counter or timer text is in the chosen font */
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
-    justify-content: space-between;
     gap: 10px;
     padding: 2px 4px;
 }
+.hud .lcd:first-child { justify-self: start; }
+.hud .lcd:last-child { justify-self: end; }
 .lcd { /* mine counter + timer */
     font: 700 calc(1.4rem * var(--num-k, 1))/1 var(--font-num);
+    font-variant-numeric: tabular-nums; /* every digit the same width where the font supports it */
     letter-spacing: .04em;
-    min-width: 4.2ch;
+    width: calc(3.8ch + 28px); /* fixed box: 3 digits (or - and 2 digits) never resize it */
+    white-space: nowrap;
     padding: 6px 14px;
     text-align: center;
     background: var(--rev);
@@ -1102,7 +1108,7 @@ html.fakecur, html.fakecur * { cursor: none !important; }
         transition-duration: .01ms !important;
     }
 }
-/* scroll lock (L): the page and sidebar stop scrolling, the board window still pans */
+/* scroll lock (C): the page and sidebar stop scrolling, the board window still pans */
 html.locked, html.locked body { overflow: hidden; overscroll-behavior: none; }
 html.locked { padding-right: var(--sbw, 0px); min-height: var(--lock-h, 0px); overflow-anchor: none; } /* replaces the vanished page scrollbar */
 html.locked .settings { overflow-y: hidden; }

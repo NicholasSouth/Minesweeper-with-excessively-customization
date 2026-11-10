@@ -121,8 +121,8 @@
           </video>
           <div 
             id="board" role="grid" tabindex="0" 
-            aria-label="Minesweeper board. Arrow keys move, D or space reveals, F flags, C chords, 
-            L locks scrolling, S toggles settings, M mutes, R restarts, plus and minus zoom, 1 resets the view, 2 resets the layout. 
+            aria-label="Minesweeper board. Arrow keys move, D or space reveals (and chords an opened number), F flags, 
+            C jumps to the board and locks scrolling, S toggles settings, M mutes, R restarts, plus and minus zoom, 1 resets the view, 2 resets the layout. 
             C from anywhere jumps back to the board.">
           </div>
           </div>
@@ -167,9 +167,8 @@
         Left-click or tap to open a cell (on a flag it removes the flag and opens the cell). 
         Right-click or long-press to flag. 
         Click a satisfied number to chord. 
-        Keyboard (default keys): arrows move, D or Space opens, F flags, C chords, R restarts. 
-        C from anywhere else jumps back to the board (on your last cell, or the first one). 
-        L locks the page so nothing scrolls except the board; press L again to unlock. 
+        Keyboard (default keys): arrows move, D or Space opens (and chords an opened number), F flags, R restarts. 
+        C jumps back to the board (on your last cell, or the first one) and locks the page so nothing scrolls except the board; press C again to unlock. 
         S opens and closes the settings, M mutes and unmutes. 
         Every key can be changed in Settings, Keys tab. 
         Drag the board to pan. 
@@ -437,8 +436,8 @@
         <p class="hint">
           Click a slot, then press the key you want. Each action has two slots. 
           Backspace clears a slot, Esc cancels. 
-          Chord and Jump to board can share a key: on the board it chords, 
-          anywhere else it jumps back to the board.
+          Jump to board (C) brings the keyboard back to the board and locks the view; 
+          press it again to unlock.
         </p>
         <p id="keys-msg" class="hint" role="status" aria-live="polite"></p>
       </section>
@@ -467,7 +466,7 @@
 
   <!-- shown while the scroll lock is on -->
   <div id="lockbadge" class="lockbadge" role="status" hidden>
-    Scroll locked · press <kbd id="lockkey">L</kbd> to unlock
+    Scroll locked · press <kbd id="lockkey">C</kbd> to unlock
   </div>
 
   <!-- close button for setting menu -->

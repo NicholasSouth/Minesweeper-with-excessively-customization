@@ -39,7 +39,7 @@ function focusBoard() {
 function setLock(on) {
     if (on === locked) return;
     if (on) {
-        showFrameAndBest(56); // board and best time on screen first (56px = room for the lock badge)
+        showFrameAndBest(12); // board and best time on screen first, the same view as the jump to board
         // the page scrollbar disappears when locked: pad by its width so nothing jumps
         root.style.setProperty('--sbw', Math.max(0, innerWidth - root.clientWidth) + 'px');
     }
@@ -171,8 +171,6 @@ board.addEventListener('keydown', e => {
         g.st[cur] === 1 ? doChord(cur) : doReveal(cur);
     } else if (isKey('flag', e)) {
         doFlag(cur);
-    } else if (isKey('chord', e)) {
-        doChord(cur);
     } else if (isKey('zin', e)) {
         zoomAtCursor(ZSTEP);
     } else if (isKey('zout', e)) {
@@ -186,11 +184,15 @@ board.addEventListener('keydown', e => {
 // global keys: work from anywhere except text boxes and the credits popup
 document.addEventListener('keydown', e => {
     if (capturing || e.repeat || isTyping(e.target) || !$('#credit').hidden) return;
-    // the lock key and the jump-to-board key also close the settings menu
-    if ((isKey('lock', e) || isKey('focus', e)) && isOpen()) toggleSettings(false);
-    if (isKey('lock', e)) {
+    // the board key also closes the settings menu
+    if (isKey('focus', e) && isOpen()) toggleSettings(false);
+    if (isKey('focus', e)) {
+        // C (default): jump to the board and lock the view. While locked, C unlocks if the board already
+        // has the keyboard, and brings the keyboard back to the board if it was elsewhere.
         e.preventDefault();
-        setLock(!locked);
+        if (locked && document.activeElement !== board) focusBoard();
+        else setLock(!locked);
+        if (!locked) focusBoard();
     } else if (isKey('settings', e)) {
         e.preventDefault();
         const open = !isOpen();
@@ -202,8 +204,5 @@ document.addEventListener('keydown', e => {
         $('#mute').click(); // same as the header button
     } else if (isKey('restart', e)) {
         start();
-    } else if (isKey('focus', e) && document.activeElement !== board) {
-        e.preventDefault();
-        focusBoard();
     }
 });

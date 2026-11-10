@@ -5,8 +5,8 @@
 /* 
     KEY BINDINGS
     Every action has two slots (S.keys[action] = [slot1, slot2]); edit them in Settings > Keys.
-    "chord" and "jump to board" may share a key (default C): on the board it chords,
-    anywhere else it jumps back to the board.
+    C ("jump to board") brings the keyboard back to the board and locks / unlocks the view.
+    There is no chord key: the open key (D / Space) chords on an opened number.
 */
 const KEY_ACTIONS = [
     { id: 'up',      label: 'Move up',               grp: 'move', def: ['ArrowUp', null] },
@@ -15,9 +15,7 @@ const KEY_ACTIONS = [
     { id: 'right',   label: 'Move right',            grp: 'move', def: ['ArrowRight', null] },
     { id: 'reveal',  label: 'Open cell',             grp: 'act', def: ['d', ' '] },
     { id: 'flag',    label: 'Flag',                  grp: 'act', def: ['f', null] },
-    { id: 'chord',   label: 'Chord (on the board)',  grp: 'act', def: ['c', null] },
-    { id: 'focus',   label: 'Jump to board',         grp: 'act', def: ['c', null] },
-    { id: 'lock',    label: 'Lock / unlock scroll',  grp: 'view', def: ['l', null] },
+    { id: 'focus',   label: 'Jump to board, lock / unlock view', grp: 'view', def: ['c', null] },
     { id: 'settings', label: 'Open / close settings', grp: 'view', def: ['s', null] },
     { id: 'mute',    label: 'Mute / unmute sound',   grp: 'view', def: ['m', null] },
     { id: 'restart', label: 'New game',              grp: 'act', def: ['r', null] },
@@ -27,7 +25,6 @@ const KEY_ACTIONS = [
     { id: 'lreset',  label: 'Reset layout',          grp: 'view', def: ['2', null] }
 ];
 const KEY_LABEL = Object.fromEntries(KEY_ACTIONS.map(a => [a.id, a.label]));
-const KEY_SHARES = { chord: 'focus', focus: 'chord' }; // this pair may use the same key
 const KEY_BLOCKED = new Set(['Tab', 'Escape', 'Enter', 'Shift', 'Control', 'Alt', 'Meta', 
     'CapsLock', 'Dead', 'Process', 'Unidentified', 'Backspace', 'Delete']);
 const keyName = k => k.length === 1 ? k.toLowerCase() : k;
@@ -46,7 +43,7 @@ const keyDefaults = () => Object.fromEntries(KEY_ACTIONS.map(a => [a.id, a.def.s
     KEY_ACTIONS.forEach(a => {
         if (Array.isArray(sv[a.id])) return;
         S.keys[a.id] = S.keys[a.id].map(k => k && KEY_ACTIONS.some(o => o.id !== a.id 
-            && o.id !== KEY_SHARES[a.id] && Array.isArray(sv[o.id]) && S.keys[o.id].includes(k)) ? null : k);
+            && Array.isArray(sv[o.id]) && S.keys[o.id].includes(k)) ? null : k);
     });
 }
 const isKey = (action, e) => 
@@ -74,13 +71,13 @@ function paintKeys() {
         b.setAttribute('aria-label', a.label + ', key ' + (s + 1) + ': ' + 
             (on ? 'press a key' : keyShow(S.keys[a.id][s])));
     }));
-    $('#lockkey').textContent = keyShow(S.keys.lock[0] || S.keys.lock[1]);
+    $('#lockkey').textContent = keyShow(S.keys.focus[0] || S.keys.focus[1]);
 }
 function assignKey(action, slot, key) {
     const moved = [];
     if (key) {
         KEY_ACTIONS.forEach(a => {
-            if (a.id === action || a.id === KEY_SHARES[action]) return;
+            if (a.id === action) return;
             if (S.keys[a.id].includes(key)) {
                 S.keys[a.id] = S.keys[a.id].map(k => k === key ? null : k);
                 moved.push(a.label);
