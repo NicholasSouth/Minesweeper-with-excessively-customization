@@ -1,4 +1,4 @@
-# Minesweeper (with excessive customization) v3.0
+# Minesweeper (with excessive customization) v3.1
 
 A browser Minesweeper with a lot of knobs: custom boards, a movable and resizable board, zoom, themes, fonts, sounds, cursors, backgrounds, rebindable keys, and a replay of every finished game that you can save, share and load.
 
@@ -8,12 +8,23 @@ No install, no build step, no account. Everything runs in your browser.
 
 ---
 
-## What's new in v3.0
+## What's new in v3.1
+
+- **`S` opens and closes the settings menu** (it still closes with Esc and the close button). Closing with `S` hands the keyboard back to the board, so you can keep playing.
+- **`M` mutes and unmutes** the sound, the same as the speaker button in the header.
+- **Both keys are rebindable** in Settings > Keys, under View. If you had already used `S` or `M` for another action, that action keeps its key and the new one starts empty.
+- **Scroll lock fix:** the page could still shift while locked, usually right after a win or a loss. The browser pulls the scroll position up when the page gets shorter (for example when the result message disappears as the replay starts), and code that focuses or scrolls to an element can move the page even with `overflow: hidden`. While locked, the page height is now held and any page scroll is put straight back.
+- **New board resets the view:** starting a new game puts the keyboard cursor on the first cell and pans the board window back to the top-left, so the cursor is visible and the next arrow key or zoom doesn't make the board jump. Your zoom level is kept on a same-size board. Watching a replay leaves your cursor where it was.
+
+<details>
+<summary>Previous version: v3.0</summary>
 
 - **No-guess boards (new default):** mines are dealt, then checked by a built-in logic solver; if the board can't be cleared by logic alone, it is re-dealt until one can. Every number you need can be deduced, so no move is ever a coin flip. Choose **Classic (random)** under **Boards** in the setup panel for the old behaviour. See [No-guess mode](#no-guess-mode).
 - **App icon:** the page now uses `assets/app-icon.ico` as its browser tab icon.
 - **Replay files:** `.misw` files now record the board type (format v2). Older v1 files still load as classic boards.
 - **Records kept apart:** best times are tracked separately for no-guess and classic boards.
+
+</details>
 
 <details>
 <summary>Previous version: v2.0</summary>
@@ -57,6 +68,8 @@ The keyboard keys below are the **defaults**. You can change all of them in **Se
 | Jump back to the board | | `C` (when the focus is not on the board) |
 | Move the keyboard cursor | | Arrow keys |
 | Lock / unlock scrolling | | `L` |
+| Open / close settings | Gear button | `S` |
+| Mute / unmute | Speaker button | `M` |
 | New game | Face button or **New game** | `R` |
 | Zoom in / out | `+` / `-` buttons, Ctrl + wheel, pinch | `+` or `=` / `-` or `_` |
 | Reset zoom | **Reset view** | `1` |
@@ -86,7 +99,7 @@ Clicking a flagged cell removes the flag and opens the cell. **Flag mode** turns
 - **Resizable board:** drag the corner handle.
 - **Chording** and **flag mode** for fast play.
 - **Full keyboard play** with a visible keyboard cursor.
-- **Scroll lock** so the page stays still while you play with the keyboard.
+- **Scroll lock** so the page stays still while you play with the keyboard. The page position and height are frozen while it is on, so nothing moves after a win or loss.
 
 ### No-guess mode
 - After your first click, the game deals a layout and plays it with logic only (no guessing): a number whose mines are all found frees its other neighbours, a number whose hidden cells are all mines marks them, two overlapping numbers are compared (subset rule), and the total mine count is used at the end. If that clears the whole board, you get it. If not, the mines are re-dealt (up to 4000 tries) and checked again.
@@ -96,7 +109,7 @@ Clicking a flagged cell removes the flag and opens the cell. **Flag mode** turns
 - It is deterministic: the same seed and first click always give the same board, so replays still match exactly.
 
 ### Keys
-- Every action has **two key slots**: move up/down/left/right, open cell, flag, chord, jump to board, lock scroll, new game, zoom in, zoom out, reset view, reset layout.
+- Every action has **two key slots**: move up/down/left/right, open cell, flag, chord, jump to board, lock scroll, open / close settings, mute, new game, zoom in, zoom out, reset view, reset layout.
 - Actions are grouped as **Movement**, **Actions** and **View**.
 - Click a slot and press a key to set it. **Backspace** clears the slot, **Esc** (or clicking away) cancels.
 - Keys that would break the page (Tab, Esc, Enter, Backspace, Delete and modifier keys) can't be assigned. Ctrl, Cmd and Alt combinations are ignored so browser shortcuts keep working.
@@ -113,7 +126,7 @@ Every move you make (open, flag, chord) is recorded. The **Replay** section unde
 - The last replay is kept in your browser, so it is still there after a reload.
 
 ### Settings menu
-A slide-out bar on the right with four tabs: **Audio**, **Theme**, **Effects** and **Keys**. Sections glide in as you open the bar or switch tab, and on narrow screens the page behind it is dimmed. The Lock and Jump-to-board keys also close it.
+A slide-out bar on the right (open and close it with the gear button, `S` or Esc) with four tabs: **Audio**, **Theme**, **Effects** and **Keys**. Sections glide in as you open the bar or switch tab, and on narrow screens the page behind it is dimmed. The Lock and Jump-to-board keys also close it.
 
 ### Themes and colours
 - Four built-in themes: **Novel**, **Lust**, **Combust**, **Ethereal**. Switch with the dots in the header.

@@ -18,6 +18,8 @@ const KEY_ACTIONS = [
     { id: 'chord',   label: 'Chord (on the board)',  grp: 'act', def: ['c', null] },
     { id: 'focus',   label: 'Jump to board',         grp: 'act', def: ['c', null] },
     { id: 'lock',    label: 'Lock / unlock scroll',  grp: 'view', def: ['l', null] },
+    { id: 'settings', label: 'Open / close settings', grp: 'view', def: ['s', null] },
+    { id: 'mute',    label: 'Mute / unmute sound',   grp: 'view', def: ['m', null] },
     { id: 'restart', label: 'New game',              grp: 'act', def: ['r', null] },
     { id: 'zin',     label: 'Zoom in',               grp: 'view', def: ['+', '='] },
     { id: 'zout',    label: 'Zoom out',              grp: 'view', def: ['-', '_'] },
@@ -39,6 +41,12 @@ const keyDefaults = () => Object.fromEntries(KEY_ACTIONS.map(a => [a.id, a.def.s
             const k = sv[a.id][i];
             return typeof k === 'string' && k && !KEY_BLOCKED.has(k) ? keyName(k) : null;
         });
+    });
+    // actions added in a newer version get their default key only if the person has not already put it elsewhere
+    KEY_ACTIONS.forEach(a => {
+        if (Array.isArray(sv[a.id])) return;
+        S.keys[a.id] = S.keys[a.id].map(k => k && KEY_ACTIONS.some(o => o.id !== a.id 
+            && o.id !== KEY_SHARES[a.id] && Array.isArray(sv[o.id]) && S.keys[o.id].includes(k)) ? null : k);
     });
 }
 const isKey = (action, e) => 

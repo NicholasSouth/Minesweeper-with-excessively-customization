@@ -108,14 +108,14 @@ function start() {
     stopReplay();
     moves = [];
     g = newGame(r, c, m, S.safety, (Math.random() * 4294967296) >>> 0, S.noGuess);
-    cur = 0;
     const dims = r + 'x' + c;
+    cur = 0; // a new board puts the keyboard cursor back on the first cell...
     if (dims !== lastDims) {
         lastDims = dims;
         zoom = 1;
-        wrap.scrollLeft = 0;
-        wrap.scrollTop = 0;
     }
+    wrap.scrollLeft = 0; // ...and shows that cell, so the next key press does not make the board jump
+    wrap.scrollTop = 0;
     build();
     paintZoom();
     hud();

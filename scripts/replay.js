@@ -101,7 +101,7 @@ function replayRound(d) {
     if (!replaying) return;
     g = newGame(d.rows, d.cols, d.mines, d.safety, d.seed, d.noGuess);
     origin = 0;
-    cur = 0;
+    if (!(cur >= 0 && cur < d.rows * d.cols)) cur = 0; // keep the player's cursor; only fix it for another board size
     if (builtDims !== d.rows + 'x' + d.cols) { // an imported replay can have another board size
         lastDims = builtDims = d.rows + 'x' + d.cols;
         zoom = 1;

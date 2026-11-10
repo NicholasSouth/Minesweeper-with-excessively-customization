@@ -3,7 +3,7 @@
 /* Scroll lock, mouse / touch / keyboard input on the board */
 
 /* lock: freezes page and sidebar scrolling; the board itself can still pan and zoom */
-let locked = false;
+let locked = false, lockX = 0, lockY = 0;
 const lockBadge = $('#lockbadge');
 // scroll a cell into view; when locked only the board window moves, never the page
 function showCell(i) {
@@ -43,12 +43,24 @@ function setLock(on) {
         // the page scrollbar disappears when locked: pad by its width so nothing jumps
         root.style.setProperty('--sbw', Math.max(0, innerWidth - root.clientWidth) + 'px');
     }
+    if (on) {
+        // freeze the page where it is: remember the scroll position and keep the page from getting
+        // shorter (a shorter page makes the browser pull the scroll position up, and the board slides)
+        lockX = scrollX;
+        lockY = scrollY;
+        root.style.setProperty('--lock-h', root.scrollHeight + 'px');
+    }
     locked = on;
     root.classList.toggle('locked', on);
     lockBadge.hidden = !on;
     if (on) focusBoard();
     sfx('ui');
 }
+// overflow:hidden stops the person scrolling, not the browser or the page's own code (focus, scrollIntoView,
+// layout changes after a win or loss...): while locked, any page scroll is put straight back
+addEventListener('scroll', () => {
+    if (locked && (scrollX !== lockX || scrollY !== lockY)) scrollTo(lockX, lockY);
+}, { passive: true });
 // wheel and touch scrolling outside the board window do nothing while locked
 ['wheel', 'touchmove'].forEach(t => addEventListener(t, e => {
     if (locked && !e.ctrlKey && !wrap.contains(e.target)) e.preventDefault();
@@ -179,6 +191,15 @@ document.addEventListener('keydown', e => {
     if (isKey('lock', e)) {
         e.preventDefault();
         setLock(!locked);
+    } else if (isKey('settings', e)) {
+        e.preventDefault();
+        const open = !isOpen();
+        toggleSettings(open);
+        if (!open) board.focus({ preventScroll: true }); // back to playing with the keyboard
+        sfx('ui');
+    } else if (isKey('mute', e)) {
+        e.preventDefault();
+        $('#mute').click(); // same as the header button
     } else if (isKey('restart', e)) {
         start();
     } else if (isKey('focus', e) && document.activeElement !== board) {

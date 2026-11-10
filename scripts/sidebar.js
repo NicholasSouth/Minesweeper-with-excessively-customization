@@ -10,7 +10,7 @@ function toggleSettings(open) {
     panel.dataset.open = open;
     closeBtn.dataset.open = open; // the close button appears / disappears with the sidebar
     gear.setAttribute('aria-expanded', open);
-    if (open) $('#vol-master').focus();
+    if (open) $('#vol-master').focus({ preventScroll: true });
     else {
         // closing stops any sound preview
         pvStop();

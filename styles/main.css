@@ -1104,7 +1104,7 @@ html.fakecur, html.fakecur * { cursor: none !important; }
 }
 /* scroll lock (L): the page and sidebar stop scrolling, the board window still pans */
 html.locked, html.locked body { overflow: hidden; overscroll-behavior: none; }
-html.locked { padding-right: var(--sbw, 0px); } /* replaces the vanished page scrollbar */
+html.locked { padding-right: var(--sbw, 0px); min-height: var(--lock-h, 0px); overflow-anchor: none; } /* replaces the vanished page scrollbar */
 html.locked .settings { overflow-y: hidden; }
 .settings { scrollbar-gutter: stable; } /* the sidebar does not shift when its scrollbar hides */
 .lockbadge {
