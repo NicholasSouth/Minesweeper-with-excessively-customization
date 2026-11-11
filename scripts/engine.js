@@ -52,6 +52,7 @@ function newGame(rows, cols, mines, safety, seed, noGuess) {
         adj: new Uint8Array(n),
         st: new Uint8Array(n),
         rev: 0, flags: 0,
+        first: -1,           // the cell opened first (the board is dealt from it); saved in a .mifi board seed
         status: 'idle', boom: -1
     };
 }
@@ -207,6 +208,7 @@ function place(g, first) {
 function reveal(g, i) {
     if (g.status === 'won' || g.status === 'lost' || g.st[i] !== 0) return;
     if (g.status === 'idle') {
+        g.first = i;
         place(g, i);
         g.status = 'playing';
     }
@@ -250,4 +252,93 @@ function chord(g, i) {
     const ns = nbrs(g, i);
     if (ns.filter(j => g.st[j] === 2).length !== g.adj[i]) return;
     for (const j of ns) if (g.st[j] === 0) reveal(g, j);
+}
+/*
+    HINT
+    Looks at the board the way a player does: only the opened numbers and the mine total are
+    used, never the hidden mines. Flags are the player's guesses, so they are NOT evidence
+    (a wrong flag must not poison a hint). Same rules as the solver, but worked out in rounds:
+    round 1 uses only what is printed on the board, round 2 may also use what round 1 proved,
+    and so on. The first round with something useful to do wins, so the hint is always the
+    shortest argument available. A safe cell beats a mine; ties go to the cell nearest `from`.
+    Returns null (game not running), { kind: 'none' } (logic is stuck, a guess is needed) or
+    { kind: 'safe' | 'mine', cells, by: numbers the argument looks at, rule, round }.
+*/
+function findHint(g, from) {
+    if (g.status !== 'playing') return null;
+    const n = g.n, nb = g.nb;
+    const kn = new Uint8Array(n); // 0 unknown, 1 opened, 2 proven mine, 3 proven safe
+    const nums = [];
+    for (let i = 0; i < n; i++) {
+        if (g.st[i] === 1) { // a 0 counts too: a wrong flag next to it stops the cascade
+            kn[i] = 1;
+            nums.push(i);
+        }
+    }
+    const fr = (from / g.cols) | 0, fc = from % g.cols;
+    const dist = j => Math.hypot(((j / g.cols) | 0) - fr, (j % g.cols) - fc);
+    let grp = 0;
+    for (let round = 1; round <= n; round++) {
+        const found = new Map(); // cell -> { cell, v, grp, by, rule }
+        const add = (cells, v, by, rule) => {
+            const id = ++grp;
+            for (const j of cells) if (!found.has(j)) found.set(j, { cell: j, v, grp: id, by, rule });
+        };
+        const hid = new Map(), rem = new Map(), cov = new Map(); // number -> hidden list / mines left; hidden cell -> numbers
+        for (const i of nums) {
+            const h = [];
+            let m = 0;
+            for (const j of nb[i]) {
+                if (kn[j] === 0) h.push(j);
+                else if (kn[j] === 2) m++;
+            }
+            if (!h.length) continue;
+            const r = g.adj[i] - m;
+            if (r === 0) add(h, 3, [i], 'count');
+            else if (r === h.length) add(h, 2, [i], 'count');
+            hid.set(i, h);
+            rem.set(i, r);
+            h.forEach(j => (cov.get(j) || cov.set(j, []).get(j)).push(i));
+        }
+        for (const [a, ha] of hid) { // two numbers, one inside the other
+            const seen = new Set([a]);
+            for (const j of ha) {
+                for (const b of cov.get(j)) {
+                    if (seen.has(b)) continue;
+                    seen.add(b);
+                    const hb = hid.get(b);
+                    if (hb.length <= ha.length || !ha.every(x => hb.includes(x))) continue;
+                    const extra = hb.filter(x => !ha.includes(x)), diff = rem.get(b) - rem.get(a);
+                    if (diff === 0) add(extra, 3, [a, b], 'subset');
+                    else if (diff === extra.length) add(extra, 2, [a, b], 'subset');
+                }
+            }
+        }
+        if (!found.size) { // the mine total
+            let mk = 0;
+            const un = [];
+            for (let i = 0; i < n; i++) {
+                if (kn[i] === 2) mk++;
+                else if (kn[i] === 0) un.push(i);
+            }
+            const left = g.mines - mk;
+            if (un.length && left === 0) add(un, 3, [], 'total');
+            else if (un.length && left === un.length) add(un, 2, [], 'total');
+            if (!found.size) return { kind: 'none' };
+        }
+        const list = [...found.values()];
+        list.forEach(f => { kn[f.cell] = f.v; });
+        // useful now: a safe cell (even one under a wrong flag) or a mine that is not flagged yet
+        const act = list.filter(f => f.v === 3 || g.st[f.cell] !== 2);
+        if (act.length) {
+            act.sort((x, y) => (y.v === 3) - (x.v === 3) || dist(x.cell) - dist(y.cell));
+            const best = act[0];
+            return {
+                kind: best.v === 3 ? 'safe' : 'mine',
+                cells: act.filter(f => f.grp === best.grp && f.v === best.v).map(f => f.cell),
+                by: best.by, rule: best.rule, round
+            };
+        }
+    }
+    return { kind: 'none' };
 }

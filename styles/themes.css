@@ -1,0 +1,91 @@
+/* Themes: shipped fonts, shared variables, the four palettes (novel, lust, combust, ethereal) */
+
+/* Fonts shipped with the app (files live in /fonts, next to /styles and /scripts) */
+@font-face {
+    font-family: "Two Fifty Six Bytes";
+    src: url("../fonts/TwofiftysixbytesRegular-5yD0j.otf") format("opentype");
+    font-display: swap;
+}
+@font-face {
+    font-family: "Ithaca";
+    src: url("../fonts/Ithaca-LVB75.ttf") format("truetype");
+    font-display: swap;
+}
+
+/* Shared var across themes */
+:root {
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    --cs: 32px; /* cell size, set from JS (zoom scales it) */
+    --cr: min(8px, calc(var(--cs) * .25)); /* cell corner radius */
+    --font-ui: "Two Fifty Six Bytes", monospace; /* scripts can override */
+    --font-num: "Two Fifty Six Bytes", monospace; /* scripts can override */
+    --cursz: 40px; /* custom cursor size, set from scripts too */
+    --sbsz: 10px; /* scrollbar thickness, set from scripts */
+    /* VHS replay look: same in every theme (tape colors, not palette colors) */
+    --vhs-scan: rgba(0, 0, 0, .22);          /* scanlines */
+    --vhs-vignette: rgba(0, 0, 0, .35);      /* dark screen edges */
+    --vhs-bar: rgba(255, 255, 255, .13);     /* rolling tracking bar */
+    --vhs-text: #fff;                        /* PLAY label */
+    --vhs-glow: rgba(255, 255, 255, .5);     /* PLAY label glow */
+    --vhs-red: rgba(255, 0, 60, .8);         /* red fringe on the label */
+    --vhs-cyan: rgba(0, 220, 255, .8);       /* cyan fringe on the label */
+    --vhs-red-soft: rgba(255, 0, 60, .4);    /* red fringe on the board */
+    --vhs-cyan-soft: rgba(0, 220, 255, .4);  /* cyan fringe on the board */
+    /* explosion fireball (same in every theme, like the VHS tape colors) */
+    --fx-core: #fff;                         /* white-hot centre */
+    --fx-fire: #ffd166;                      /* flame */
+}
+/* 
+    A theme is a palette on any element with data-theme (<html> and each header dot).
+    Novel (blue) is the default theme. 
+*/
+:root,
+[data-theme="novel"] {
+    color-scheme: dark;
+    --bg: #0a1822;
+    --surface: #11242f;
+    --text: #e8f1f7;
+    --muted: #8aa3b5;
+    --accent: #2fbfff; /* cleared empty areas, primary button */
+    --hid: #243746; /* hidden cell, inputs */
+    --hidh: #2f4558; /* hover */
+    --rev: #0e1d28; /* revealed number cell, counters */
+    --danger: #ff5c5c; /* the mine clicked */
+    --line: rgba(255, 255, 255, .06);
+    --shadow: rgba(0, 0, 0, .55);
+    --warnbg: #3a2a00;
+    --warnt: #ffcc66;
+    --n1: #8fd3ff; --n2: #7be0a4; --n3: #ff8a8a; --n4: #b6a6ff;
+    --n5: #ffb86b; --n6: #5fe0d0; --n7: #e6edf2; --n8: #9fb0bd;
+    --sbthumb: #2c6e8f; --sbtrack: #0e1d28; /* scrollbar */
+}
+[data-theme="lust"] {
+    --bg: #070508; --surface: #141018; --text: #f4eaf3; --muted: #a995a8;
+    --accent: #d64fb0; --hid: #2a222f; --hidh: #382e3e; --rev: #0d0a11;
+    --danger: #ff5c7a;
+    --n1: #9ec5ff; --n2: #86e3a5; --n3: #ff8fa8; --n4: #c3a9ff;
+    --n5: #ffbe7a; --n6: #6fe6d6; --n7: #ece6ee; --n8: #a995a8;
+    --sbthumb: #8a3a78; --sbtrack: #0d0a11;
+}
+[data-theme="combust"] {
+    --bg: #090807; --surface: #16120f; --text: #f3ede6; --muted: #a39a90;
+    --accent: #f08a24; --hid: #2b2621; --hidh: #39332c; --rev: #0e0c0a;
+    --danger: #ff5a4a;
+    --n1: #9ccbff; --n2: #8be0a0; --n3: #ff8b82; --n4: #bba8ff;
+    --n5: #ffc27a; --n6: #6fe0cf; --n7: #eee9e3; --n8: #a39a90;
+    --sbthumb: #a8601c; --sbtrack: #0e0c0a;
+}
+[data-theme="ethereal"] {
+    color-scheme: light;
+    --bg: #aaa598; --surface: #bdb8ab; --text: #24211b; --muted: #4d493f;
+    --accent: #f3eee1; --hid: #8e897d; --hidh: #9d988b; --rev: #c9c4b6;
+    --danger: #c0392b;
+    --line: rgba(0, 0, 0, .1);
+    --shadow: rgba(40, 30, 10, .28);
+    --warnbg: #fff1c9; --warnt: #6b4b00;
+    --n1: #1d4fb8; --n2: #1d7a35; --n3: #b32424; --n4: #3d2391;
+    --n5: #8e3f0a; --n6: #00707a; --n7: #24211b; --n8: #4d493f;
+    --sbthumb: #6f6a5e; --sbtrack: #b0ab9e;
+}

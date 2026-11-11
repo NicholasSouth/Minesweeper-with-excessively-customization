@@ -10,6 +10,7 @@ const rnd = (a, b) => a + Math.random() * (b - a);
 let g, cells = [], cur = 0, t0 = 0, tick = 0;
 let origin = 0; // cell the last action started from; animations ripple out from it
 let flagMode = false, lp = 0, lpFired = false;
+let hintMap = null, hintsUsed = 0, hintKey = ''; // the hint on show (cell -> 'safe' | 'mine' | 'src'), hints used this game
 let zoom = 1, csNow = 32, lastDims = '', builtDims = '';
 
 /* 

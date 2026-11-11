@@ -1,16 +1,16 @@
 "use strict";
 
-/* Replay recording, playback, .misw import/export, act/doReveal/doFlag/doChord */
+/* Replay recording, playback, .mire import/export, act/doReveal/doFlag/doChord */
 
 /*
     REPLAY: every move that changes the board is recorded as { k, i, t }
     (k: 'r' open, 'f' flag, 'c' chord; i: cell index; t: ms since the first open).
     Mines are placed from the game's seed, so re-applying the same moves to a fresh
     game with that seed reproduces it exactly. A finished game is kept as rpData,
-    plays back in a loop on the board, and can be saved as a .misw file (JSON),
+    plays back in a loop on the board, and can be saved as a .mire file (JSON),
     or loaded back from one.
 */
-const MISW_VERSION = 2, MISW_OLDEST = 1, // v1 files (no noGuess field) still load
+const MIRE_VERSION = 1, // v4.0 starts a new format: old .misw replays can no longer be read
      SPEEDS = [0.5, 1, 2, 4, 8];
 let moves = [], replaying = false, rpTimer = 0, rpData = null;
 const rpBadge = $('#rp');
@@ -29,24 +29,26 @@ function applyTo(game, m) {
         reveal(game, m.i);
     }
 }
-function makeReplay(game, mv, ms) {
+function makeReplay(game, mv, ms, hints) {
     return {
         rows: game.rows, cols: game.cols, mines: game.mines, safety: game.safety, seed: game.seed,
-        noGuess: game.noGuess,
+        noGuess: game.noGuess, hints: hints || 0,
         result: game.status, ms: Math.round(ms || 0), moves: mv.map(m => ({ ...m })),
         created: new Date().toISOString()
     };
 }
 const serializeReplay = d => ({
-    format: 'misw', version: MISW_VERSION, app: 'Minesweeper', created: d.created,
-    rows: d.rows, cols: d.cols, mines: d.mines, safety: d.safety, seed: d.seed, noGuess: !!d.noGuess,
+    format: 'mire', version: MIRE_VERSION, app: 'Minesweeper', created: d.created,
+    rows: d.rows, cols: d.cols, mines: d.mines, safety: d.safety, seed: d.seed, noGuess: !!d.noGuess, hints: d.hints || 0,
     result: d.result, ms: d.ms, moves: d.moves.map(m => [m.k, m.i, m.t])
 });
-// check a parsed .misw object and replay it on a hidden game; throws a readable error
+// check a parsed .mire object and replay it on a hidden game; throws a readable error
 function parseReplay(o) {
-    if (!o || typeof o !== 'object' || o.format !== 'misw') 
-        throw new Error('This is not a .misw replay file.');
-    if (!Number.isInteger(o.version) || o.version < MISW_OLDEST || o.version > MISW_VERSION) 
+    if (o && o.format === 'misw') 
+        throw new Error('Old .misw replays can no longer be opened in v4.0. Only .mire replays work.');
+    if (!o || typeof o !== 'object' || o.format !== 'mire') 
+        throw new Error('This is not a .mire replay file.');
+    if (o.version !== MIRE_VERSION) 
         throw new Error('This replay was made by a different version.');
     const rows = +o.rows, cols = +o.cols, mines = +o.mines, seed = +o.seed;
     if (!Number.isInteger(rows) || !Number.isInteger(cols) 
@@ -67,11 +69,12 @@ function parseReplay(o) {
             throw new Error('This replay contains a broken move.');
         mv.push({ k: a[0], i: a[1], t: Math.round(+a[2]) });
     }
-    const noGuess = o.noGuess === true, sim = newGame(rows, cols, mines, o.safety, seed, noGuess);
+    const noGuess = o.noGuess === true, hints = Number.isInteger(o.hints) && o.hints > 0 ? Math.min(o.hints, 9999) : 0,
+        sim = newGame(rows, cols, mines, o.safety, seed, noGuess);
     mv.forEach(m => applyTo(sim, m));
     if (sim.status === 'idle') throw new Error('This replay never opens a cell.');
     return {
-        rows, cols, mines: sim.mines, safety: o.safety, seed, noGuess, moves: mv,
+        rows, cols, mines: sim.mines, safety: o.safety, seed, noGuess, hints, moves: mv,
         result: sim.status === 'playing' ? 'unfinished' : sim.status, // trust the replay, not the label
         ms: Math.round(Math.max(0, +o.ms) || mv[mv.length - 1].t),
         created: typeof o.created === 'string' ? o.created.slice(0, 40) : new Date().toISOString()
@@ -91,6 +94,7 @@ function playReplay(d) {
     clearTimeout(rpTimer);
     clearInterval(tick);
     replaying = true;
+    clearHint();
     rpBadge.hidden = false;
     frame.classList.add('vhs-on'); // VHS look while the replay plays
     $('#msg').textContent = '';
@@ -139,7 +143,7 @@ function replayRound(d) {
 }
 // a game just ended: keep it as the current replay, and play it if auto-replay is on
 function finishReplay() {
-    rpData = makeReplay(g, moves, g.ms);
+    rpData = makeReplay(g, moves, g.ms, hintsUsed);
     store.set('lastReplay', serializeReplay(rpData));
     paintReplay();
     if (S.rpAuto) rpTimer = setTimeout(() => playReplay(rpData), 2800);
@@ -164,9 +168,9 @@ const fmtSec = ms => (ms / 1000).toFixed(1) + ' s';
 function paintReplay() {
     const d = rpData;
     rpEl.info.textContent = !d
-        ? 'Finished games are saved here automatically. You can also import a .misw file.'
+        ? 'Finished games are saved here automatically. You can also import a .mire file.'
         : (replaying ? 'Playing: ' : 'Saved: ') + d.rows + '×' + d.cols + (d.noGuess ? ' no-guess' : '') + ' board, ' + d.mines + ' mines, ' 
-          + d.moves.length + ' moves, '
+          + d.moves.length + ' moves' + (d.hints ? ', ' + d.hints + (d.hints > 1 ? ' hints' : ' hint') : '') + ', '
           + (d.result === 'won' ? 'cleared in ' + fmtSec(d.ms) : d.result === 'lost' ? 'lost after ' + fmtSec(d.ms) 
             : 'unfinished') + '.';
     rpEl.play.textContent = replaying ? 'Stop replay' : 'Watch replay';
@@ -197,8 +201,8 @@ rpEl.play.onclick = () => {
 };
 rpEl.exp.onclick = () => {
     if (!rpData) return;
-    saveFile(new Blob([JSON.stringify(serializeReplay(rpData))], { type: 'application/json' }), rpName('misw'));
-    rpSay('Saved ' + rpName('misw').slice(0, 60) + ' to your downloads.');
+    saveFile(new Blob([JSON.stringify(serializeReplay(rpData))], { type: 'application/json' }), rpName('mire'));
+    rpSay('Saved ' + rpName('mire').slice(0, 60) + ' to your downloads.');
     sfx('ui');
 };
 rpEl.imp.onclick = () => rpEl.file.click();
@@ -212,7 +216,7 @@ rpEl.file.onchange = async e => {
         try {
             o = JSON.parse(await f.text());
         } catch (err) {
-            throw new Error('This is not a .misw replay file.');
+            throw new Error('This is not a .mire replay file.');
         }
         const d = parseReplay(o);
         if (liveGame() && !confirm('A game is in progress. Importing a replay will end it. Continue?')) return;
@@ -232,9 +236,12 @@ try { // bring back the last saved replay from an earlier visit
         rpData = parseReplay(saved);
         paintReplay();
     }
-} catch (e) {}
+} catch (e) { // a replay saved by v3 (.misw) is dropped: it can not be read any more
+    try { localStorage.removeItem('msweeper:lastReplay'); } catch (err) {}
+}
 function act(fn, snd, mv) {
     if (replaying || g.status === 'won' || g.status === 'lost') return;
+    clearHint(); // any move takes the hint away
     const before = g.status, rev0 = g.rev, flags0 = g.flags;
     fn();
     if (before === 'idle' && g.status !== 'idle') {

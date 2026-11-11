@@ -19,6 +19,8 @@ const KEY_ACTIONS = [
     { id: 'settings', label: 'Open / close settings', grp: 'view', def: ['s', null] },
     { id: 'mute',    label: 'Mute / unmute sound',   grp: 'view', def: ['m', null] },
     { id: 'restart', label: 'New game',              grp: 'act', def: ['r', null] },
+    { id: 'hint',    label: 'Show a hint',           grp: 'act', def: ['h', null] },
+    { id: 'guide',   label: 'Open / close quick guide', grp: 'view', def: ['g', null] },
     { id: 'zin',     label: 'Zoom in',               grp: 'view', def: ['+', '='] },
     { id: 'zout',    label: 'Zoom out',              grp: 'view', def: ['-', '_'] },
     { id: 'zreset',  label: 'Reset view',            grp: 'view', def: ['1', null] },

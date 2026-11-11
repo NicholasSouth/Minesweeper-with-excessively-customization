@@ -21,6 +21,7 @@ function hud() {
                         { duration: 220, easing: 'ease-out' });
     }
     face();
+    paintSeed(); // the board-seed export button follows the game state
 }
 function clock() {
     const s = g.status === 'idle' ? 0 : Math.min(999, Math.floor((performance.now() - t0) / 1000));

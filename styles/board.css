@@ -1,0 +1,411 @@
+/* Game area: frame, grip, HUD, zoom bar, board, cells, effects, resize corner, info line, hint marks */
+
+/* Game area */
+/* frame: the card that holds everything; js adds .free .moving .glide .sizing */
+.frame {
+    position: relative;
+    translate: var(--mx, 0px) var(--my, 0px); /* the board's own offset (drag the grip) */
+    transition: scale .18s ease;
+    width: max-content;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 8px 14px 22px;
+    display: grid;
+    gap: 10px;
+    background: var(--surface);
+    border-radius: 26px;
+    box-shadow: 0 18px 40px -18px var(--shadow);
+}
+.frame.free { max-width: none; }
+.frame.free .wrap { max-width: none; max-height: none; }
+.frame.moving { scale: 1.012; box-shadow: 0 34px 60px -22px var(--shadow); }
+.frame.glide { transition: translate .45s cubic-bezier(.22, 1, .36, 1), scale .18s ease; }
+.frame.glide .wrap { transition: width .45s cubic-bezier(.22, 1, .36, 1), height .45s cubic-bezier(.22, 1, .36, 1); }
+.frame.sizing { user-select: none; }
+/* grip bar: drag to move the board */
+.grip {
+    height: 16px;
+    margin: 0 auto;
+    width: 64px;
+    border-radius: 999px;
+    cursor: grab;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+    background:
+        radial-gradient(circle, var(--muted) 1.5px, transparent 2px) center / 10px 6px repeat-x,
+        transparent;
+    opacity: .6;
+    transition: opacity .15s, background-color .15s;
+}
+.grip:hover, .grip:focus-visible { opacity: 1; background-color: var(--rev); }
+.frame.moving .grip { cursor: grabbing; opacity: 1; background-color: var(--rev); }
+/* hud: mines left, face, timer */
+.hud {
+    /* three columns: the two outer ones are equal, so the face stays dead centre
+       however wide the counter or timer text is in the chosen font */
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    padding: 2px 4px;
+}
+.hud .lcd:first-child { justify-self: start; }
+.hud .lcd:last-child { justify-self: end; }
+.lcd { /* mine counter + timer */
+    font: 700 calc(1.4rem * var(--num-k, 1))/1 var(--font-num);
+    font-variant-numeric: tabular-nums; /* every digit the same width where the font supports it */
+    letter-spacing: .04em;
+    width: calc(3.8ch + 28px); /* fixed box: 3 digits (or - and 2 digits) never resize it */
+    white-space: nowrap;
+    padding: 6px 14px;
+    text-align: center;
+    background: var(--rev);
+    color: var(--text);
+    border-radius: 999px;
+}
+/* emotions */
+#face {
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border-radius: 50%;
+    background-image: var(--ic-face-default, url("../assets/face-default.png"));
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 70%;
+}
+#face[data-face="oh"]  { 
+    background-image: var(--ic-face-oh, url("../assets/face-oh.png")); 
+    transform: scale(.9); 
+}
+#face[data-face="win"] { 
+    background-image: var(--ic-face-win, url("../assets/face-win.png")); 
+    animation: face-win 1.1s ease-in-out; 
+}
+#face[data-face="die"] { 
+    background-image: var(--ic-face-die, url("../assets/face-die.png")); 
+    animation: face-die .7s ease-out; 
+}
+@keyframes face-die {
+    0%   { transform: scale(1); }
+    15%  { transform: scale(1.25) rotate(-12deg); }
+    30%  { transform: rotate(10deg); }
+    45%  { transform: rotate(-8deg); }
+    60%  { transform: rotate(5deg); }
+    100% { transform: none; }
+}
+@keyframes face-win {
+    0%, 100% { transform: translateY(0); }
+    20% { transform: translateY(-12px) scale(1.12); }
+    40% { transform: translateY(0); }
+    60% { transform: translateY(-7px); }
+    80% { transform: translateY(0); }
+}
+/* zoom bar */
+.zoombar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+.zoombar output {
+    min-width: 4ch;
+    text-align: center;
+    font-size: .85rem;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+}
+.zoombar button.small { min-width: 32px; }
+/* board window, video behind the grid, the grid */
+.wrap {
+    overflow: auto;
+    max-width: 100%;
+    max-height: 72vh;
+    border-radius: 14px;
+}
+.boardbox { position: relative; width: max-content; }
+.bgvid { /* board video sits behind the grid */
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+    z-index: 0;
+}
+#board {
+    display: grid;
+    position: relative; /* sits above the background video */
+    z-index: 1;
+    width: max-content;
+    overflow: clip; /* explosion sparks stay inside the board */
+    touch-action: none; /* drag and pinch are handled in JS */
+    -webkit-user-select: none;
+    user-select: none;
+}
+.row-g { display: contents; }
+/* 
+    custom board background (image or video). Hidden cells stay solid, cleared cells go
+    transparent. The dimming layer uses the revealed-cell color so numbers stay readable. 
+*/
+#board[data-img],
+#board[data-vid] {
+    background-image:
+        linear-gradient(color-mix(in srgb, var(--rev) var(--dimp, 30%), transparent),
+                        color-mix(in srgb, var(--rev) var(--dimp, 30%), transparent)),
+        var(--board-img, none);
+    background-size: cover;
+    background-position: center;
+}
+/* cells (order matters: later rules override earlier ones) */
+.c {
+    width: var(--cs);
+    height: var(--cs);
+    display: grid;
+    place-items: center;
+    font: 700 calc(var(--cs) * .56 * var(--num-k, 1))/1 var(--font-num);
+    background: var(--hid);
+    color: var(--text);
+    border-radius: var(--cr);
+    transform: scale(.88);
+    transition: transform .08s, background .12s;
+    cursor: pointer;
+}
+.c:hover {
+    background: var(--hidh);
+    transform: scale(.95);
+}
+.c.f { background-color: var(--muted); }   /* flagged */
+.c.r { /* revealed number cell */
+    background: var(--rev);
+    border-radius: 0;
+    transform: none;
+    box-shadow: inset 0 0 0 1px var(--line);
+    cursor: default;
+}
+.c.z { /* revealed empty cell: solid accent block */
+    background: var(--accent);
+    box-shadow: none;
+}
+.c.x { /* the mine clicked */
+    background: var(--danger);
+    border-radius: var(--cr);
+    transform: scale(.88);
+}
+/* cell icons: longhands only, so the colors above still apply */
+.c.f, .c.m, .c.w {
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 62%;
+}
+.c.f { background-image: var(--ic-flag-cell, url("../assets/flag-cell.png")); } /* flag */
+.c.m { background-image: url("../assets/bomb.png"); } /* mine */
+.c.w { background-image: url("../assets/x.png"); } /* wrong flag */
+/* number colors (after .c so they win) */
+.n1 { color: var(--n1); }
+.n2 { color: var(--n2); }
+.n3 { color: var(--n3); }
+.n4 { color: var(--n4); }
+.n5 { color: var(--n5); }
+.n6 { color: var(--n6); }
+.n7 { color: var(--n7); }
+.n8 { color: var(--n8); }
+/* custom background: cleared cells show it, numbers get a halo */
+#board[data-img] .c.r:not(.x),
+#board[data-vid] .c.r:not(.x) { background-color: transparent; }
+#board[data-img] .c.r,
+#board[data-vid] .c.r { text-shadow: 0 0 4px var(--rev), 0 0 2px var(--rev); }
+/* keyboard cursor: two-tone ring so it shows on every cell, even accent-filled ones */
+#board:focus-visible { outline: none; }
+#board:focus-visible .cur {
+    outline: 3px solid var(--text);
+    outline-offset: -3px;
+    box-shadow: inset 0 0 0 5px var(--bg);
+}
+/* cell animations (JS sets the class, --ad is the delay from distance to your click) */
+@keyframes cell-in {
+    from { opacity: 0; transform: scale(.2) rotate(-25deg); }
+    60%  { opacity: 1; transform: scale(.98) rotate(4deg); }
+}
+@keyframes cell-rev {
+    from { opacity: 0; transform: scale(.3); filter: brightness(2); }
+    55%  { opacity: 1; transform: scale(1.12); filter: brightness(1.35); }
+}
+@keyframes flag-drop {
+    from { 
+        transform: translateY(-70%) scale(1.7) rotate(-22deg); 
+        box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 75%, transparent); 
+    }
+    50%  { transform: translateY(0) scale(.72) rotate(7deg); }
+    75%  { transform: scale(.95) rotate(-2deg); }
+    to   { transform: scale(.88); box-shadow: 0 0 0 14px transparent; }
+}
+@keyframes flag-lift {
+    from { transform: scale(1.15) rotate(8deg); filter: brightness(1.5); }
+}
+@keyframes mine-pop {
+    from { opacity: 0; transform: scale(0) rotate(-120deg); }
+    65%  { opacity: 1; transform: scale(1.3) rotate(10deg); }
+}
+@keyframes boom {
+    0%   { transform: scale(.2); filter: brightness(1); box-shadow: 0 0 0 0 var(--danger); }
+    25%  { transform: scale(1.9); filter: brightness(2.6); box-shadow: 0 0 30px 10px var(--danger); }
+    50%  { transform: scale(.7); }
+    75%  { transform: scale(1.05); }
+    100% { transform: scale(.88); filter: brightness(1); box-shadow: 0 0 0 0 transparent; }
+}
+.c.a-in    { animation: cell-in .4s cubic-bezier(.2, .8, .3, 1.2) var(--ad, 0ms) backwards; }
+.c.a-rev   { animation: cell-rev .38s cubic-bezier(.2, .8, .3, 1) var(--ad, 0ms) backwards; }
+.c.a-flag  { animation: flag-drop .5s cubic-bezier(.3, 1.2, .5, 1) var(--ad, 0ms) backwards; }
+.c.a-unflag{ animation: flag-lift .25s ease-out; }
+.c.a-mine  { animation: mine-pop .45s cubic-bezier(.2, .9, .3, 1.2) var(--ad, 0ms) backwards; }
+.c.a-boom  { animation: boom .8s ease-out; position: relative; z-index: 2; }
+/* explosion: fireball, two shockwaves, sparks (JS puts .fx on the clicked mine) */
+.fx { position: absolute; width: 0; height: 0; z-index: 3; pointer-events: none; }
+.fx i { position: absolute; left: 0; top: 0; display: block; }
+.fx .core {
+    width: calc(var(--cs) * 2.4);
+    height: calc(var(--cs) * 2.4);
+    margin: calc(var(--cs) * -1.2) 0 0 calc(var(--cs) * -1.2);
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--fx-core) 0%, var(--fx-fire) 30%, var(--danger) 60%, transparent 72%);
+    animation: core .55s ease-out forwards;
+}
+@keyframes core { 
+    from { transform: scale(.1); opacity: 1; } 
+    to { transform: scale(2.2); opacity: 0; } 
+}
+.fx .ring {
+    width: calc(var(--cs) * 2);
+    height: calc(var(--cs) * 2);
+    margin: calc(var(--cs) * -1) 0 0 calc(var(--cs) * -1);
+    border-radius: 50%;
+    border: 3px solid var(--danger);
+    animation: ring .75s ease-out forwards;
+}
+.fx .ring.r2 { border-color: var(--text); animation-delay: .12s; animation-duration: .9s; }
+@keyframes ring { 
+    from { transform: scale(.2); opacity: 1; } 
+    to { transform: scale(4.2); opacity: 0; border-width: 1px; } 
+}
+.fx .spark {
+    width: var(--sz, 6px);
+    height: var(--sz, 6px);
+    margin: calc(var(--sz, 6px) / -2) 0 0 calc(var(--sz, 6px) / -2);
+    border-radius: 50%;
+    background: var(--c);
+    animation: spark var(--dur, 700ms) cubic-bezier(.1, .7, .3, 1) forwards;
+}
+@keyframes spark {
+    from { transform: translate(0, 0) scale(1); opacity: 1; }
+    75%  { opacity: 1; }
+    to   { transform: translate(var(--dx), var(--dy)) scale(.1); opacity: 0; }
+}
+/* rock splash on a cell: flattened rings, droplets and chips (JS animates the last two) */
+.splash .wring {
+    width: calc(var(--cs) * 1.3);
+    height: calc(var(--cs) * .65);
+    margin: calc(var(--cs) * -.325) 0 0 calc(var(--cs) * -.65);
+    border-radius: 50%;
+    border: 2px solid var(--n1);
+    animation: wring .65s ease-out both;
+}
+.splash .wring.w2 { border-color: var(--accent); animation-delay: .09s; }
+@keyframes wring { 
+    from { transform: scale(.2); opacity: .9; } 
+    to { transform: scale(2.4); opacity: 0; } 
+}
+.splash .drop {
+    width: var(--sz);
+    height: var(--sz);
+    margin: calc(var(--sz) / -2) 0 0 calc(var(--sz) / -2);
+    border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%;
+    background: color-mix(in srgb, var(--n1) 75%, white);
+}
+.splash .chip {
+    width: var(--sz);
+    height: var(--sz);
+    margin: calc(var(--sz) / -2) 0 0 calc(var(--sz) / -2);
+    border-radius: 2px;
+    background: var(--muted);
+}
+/* lose: red flash centred on the mine */
+.flash {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    pointer-events: none;
+    background: radial-gradient(circle at var(--fx, 50%) var(--fy, 50%), 
+                color-mix(in srgb, var(--danger) 60%, transparent), transparent 65%);
+    animation: flash .55s ease-out forwards;
+}
+@keyframes flash { from { opacity: 1; } to { opacity: 0; } }
+/* win: confetti in the theme's colors */
+.confetti { position: fixed; inset: 0; z-index: 40; pointer-events: none; overflow: hidden; }
+.confetti i {
+    position: absolute;
+    top: -4vh;
+    left: var(--x);
+    width: var(--w);
+    height: var(--h);
+    background: var(--c);
+    border-radius: 2px;
+    animation: fall var(--dur) cubic-bezier(.3, .1, .6, 1) var(--dl) both;
+}
+@keyframes fall {
+    from { transform: translate3d(0, 0, 0) rotate(0); opacity: 1; }
+    85%  { opacity: 1; }
+    to   { transform: translate3d(var(--dx), 108vh, 0) rotate(var(--rot)); opacity: 0; }
+}
+/* resize corner (bottom right of the frame) */
+.rsz {
+    position: absolute;
+    right: 4px;
+    bottom: 4px;
+    width: 18px;
+    height: 18px;
+    border-radius: 6px;
+    cursor: nwse-resize;
+    touch-action: none;
+    opacity: .6;
+    background: linear-gradient(135deg,
+        transparent 0 48%, var(--muted) 48% 56%, transparent 56% 66%,
+        var(--muted) 66% 74%, transparent 74% 84%, var(--muted) 84% 92%, transparent 92%);
+    transition: opacity .15s, transform .15s;
+}
+.rsz:hover, .frame.sizing .rsz { opacity: 1; transform: scale(1.15); }
+
+/* info lines under the game area */
+.info {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    color: var(--muted);
+    margin: 0;
+}
+#msg {
+    font-weight: 600;
+    color: var(--text);
+}
+.rp {
+    font-weight: 600;
+    color: var(--accent);
+    animation: rp-blink 1.6s ease-in-out infinite;
+}
+@keyframes rp-blink { 50% { opacity: .45; } }
+
+/* hint marks on the board (last, so they win over the cell rules above) */
+:root { --hint-safe: var(--n2); --hint-mine: var(--danger); } /* the theme's own green and red */
+.c.h-safe, .c.h-mine { position: relative; z-index: 1; transform: scale(.95); }
+.c.h-safe { box-shadow: 0 0 0 3px var(--hint-safe), 0 0 16px 2px var(--hint-safe); animation: hint-pulse 1s ease-in-out infinite; }
+.c.h-mine { box-shadow: 0 0 0 3px var(--hint-mine), 0 0 16px 2px var(--hint-mine); animation: hint-pulse 1s ease-in-out infinite; }
+ /* the keyboard cursor sits on the hint cell: keep its ring and let the glow show around it */
+#board:focus-visible .cur.h-safe { box-shadow: inset 0 0 0 5px var(--bg), 0 0 0 3px var(--hint-safe), 0 0 16px 2px var(--hint-safe); }
+#board:focus-visible .cur.h-mine { box-shadow: inset 0 0 0 5px var(--bg), 0 0 0 3px var(--hint-mine), 0 0 16px 2px var(--hint-mine); }
+.c.h-src { outline: 3px dashed var(--accent); outline-offset: -4px; position: relative; z-index: 1; }
+@keyframes hint-pulse { 50% { filter: brightness(1.5); } }
+@media (prefers-reduced-motion: reduce) {
+    .c.h-safe, .c.h-mine { animation: none; }
+}

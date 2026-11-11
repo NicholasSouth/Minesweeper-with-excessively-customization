@@ -1,0 +1,72 @@
+/* Replay section and the VHS look */
+
+/* Replay section (a .panel under the board) */
+#replay { margin-top: 14px; }
+#replay h2 { margin: 0; font-size: 1.1rem; }
+
+/* VHS replay look: scanlines, tracking bar, noise, colour fringing, jitter, PLAY label */
+.vhs { display: none; }
+.frame.vhs-on .vhs {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    border-radius: 26px;
+    overflow: hidden;
+    pointer-events: none;
+    background:
+        repeating-linear-gradient(to bottom, var(--vhs-scan) 0 1px, transparent 1px 3px),
+        radial-gradient(ellipse at center, transparent 55%, var(--vhs-vignette) 100%);
+}
+.frame.vhs-on .vhs::before { /* grain */
+    content: '';
+    position: absolute;
+    inset: -20px;
+    opacity: .22;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    animation: vhs-noise .4s steps(4) infinite;
+}
+.vhs-bar { /* rolling tracking error */
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -20%;
+    height: 14%;
+    background: linear-gradient(to bottom, transparent, var(--vhs-bar), transparent);
+    backdrop-filter: blur(1.5px) brightness(1.2);
+    animation: vhs-roll 4.5s linear infinite;
+}
+.vhs-osd {
+    position: absolute;
+    left: 18px;
+    top: 14px;
+    font: 700 1rem/1 var(--font-num);
+    letter-spacing: .12em;
+    color: var(--vhs-text);
+    text-shadow: 2px 0 var(--vhs-red), -2px 0 var(--vhs-cyan), 0 0 6px var(--vhs-glow);
+    animation: vhs-blink 1.4s steps(1) infinite;
+}
+.frame.vhs-on .wrap {
+    filter: saturate(1.35) contrast(1.08) blur(.3px)
+            drop-shadow(2px 0 0 var(--vhs-red-soft)) drop-shadow(-2px 0 0 var(--vhs-cyan-soft));
+    animation: vhs-jitter .9s steps(1) infinite;
+}
+@keyframes vhs-noise {
+    0%   { transform: translate(0, 0); }
+    25%  { transform: translate(-12px, 8px); }
+    50%  { transform: translate(9px, -14px); }
+    75%  { transform: translate(-6px, -5px); }
+    100% { transform: translate(14px, 10px); }
+}
+@keyframes vhs-roll { from { top: -20%; } to { top: 110%; } }
+@keyframes vhs-blink { 50% { opacity: 0; } }
+@keyframes vhs-jitter {
+    0%, 100% { transform: translateX(0); }
+    8%   { transform: translateX(-2px) skewX(.4deg); }
+    10%  { transform: translateX(0); }
+    52%  { transform: translateX(1.5px); }
+    54%  { transform: translateX(0); }
+    78%  { transform: translateX(-1px) skewX(-.3deg); }
+    80%  { transform: translateX(0); }
+}

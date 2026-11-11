@@ -1,6 +1,6 @@
-# Minesweeper (with excessive customization) v3.2
+# Minesweeper (with excessive customization) v4.0
 
-A browser Minesweeper with a lot of knobs: custom boards, a movable and resizable board, zoom, themes, fonts, sounds, cursors, backgrounds, rebindable keys, and a replay of every finished game that you can save, share and load.
+A browser Minesweeper with a lot of knobs: custom boards, a movable and resizable board, zoom, themes, fonts, sounds, cursors, backgrounds, rebindable keys, and a replay of every finished game, hints, a quick guide, and three file types to save and share replays, settings and board seeds.
 
 **Play it:** https://nicholassouth.github.io/Minesweeper-with-excessively-customization/
 
@@ -8,13 +8,28 @@ No install, no build step, no account. Everything runs in your browser.
 
 ---
 
-## What's new in v3.2
+## What's new in v4.0
+
+- **Hints (`H`):** press `H` (or the **Hint** button) and the game marks a move that logic can prove from what is on the board. A **green glow** is a safe cell, a **red glow** is a mine, and **dashed rings** show the numbers the hint is built from. A hint never moves your keyboard cursor or the view. See [Hints](#hints).
+- **Quick guide (`G` or `?`):** a popup with the goal, the controls (it shows your own key bindings), hints and files. Open it with `G` or the **?** button in the top right corner of the board setup panel; close it with `G`, `Esc`, **Close** or a click outside.
+- **Three file types**, all plain JSON:
+  - **`.mire`: replays.** Replays now use `.mire` (it replaces `.misw`). **Old `.misw` replays can no longer be opened**, and a replay saved in your browser by v3 is dropped on first load.
+  - **`.mise`: settings.** Export and import your settings from the top of the settings bar.
+  - **`.mifi`: board seed.** Export the board you are playing and share it: anyone who loads the file gets exactly the same board. See [File formats](#file-formats).
+- Replays now also record how many hints were used.
+- **Stylesheet split:** `styles/main.css` is now 12 smaller files, one per area (see [Running it locally](#running-it-locally)). The page looks exactly the same.
+- New keys in Settings > Keys: **Show a hint** (`H`) and **Open / close quick guide** (`G`).
+
+<details>
+<summary>Previous version: v3.2</summary>
 
 - **One key for chord, one key for the board:** there is no separate chord key any more. **`D` / `Space` (Open cell) now also chords** when the cursor is on an opened number, the same as clicking it. **`C` is now "Jump to board, lock / unlock view"**: it brings the keyboard back to the board and locks scrolling in one press (it also closes the settings menu); press `C` again to unlock. The separate **Chord** and **Lock** actions are gone from Settings > Keys, and the lock badge shows whichever key you bound to Jump to board. A key you had saved for Jump to board is kept.
 - **Steady HUD:** the mine counter, face and timer no longer shift as the numbers change or when you switch fonts. The face now sits in the exact centre, and the counter and timer have a fixed width.
 
+</details>
+
 <details>
-<summary>Previous version: v3.1</summary>
+<summary>Earlier version: v3.1</summary>
 
 - **`S` opens and closes the settings menu** (it still closes with Esc and the close button). Closing with `S` hands the keyboard back to the board, so you can keep playing.
 - **`M` mutes and unmutes** the sound, the same as the speaker button in the header.
@@ -77,6 +92,8 @@ The keyboard keys below are the **defaults**. You can change all of them in **Se
 | Jump back to the board and lock / unlock scrolling | | `C` |
 | Open / close settings | Gear button | `S` |
 | Mute / unmute | Speaker button | `M` |
+| Show a hint | **Hint** button | `H` |
+| Quick guide | **?** button (top right of the setup panel) | `G` |
 | New game | Face button or **New game** | `R` |
 | Zoom in / out | `+` / `-` buttons, Ctrl + wheel, pinch | `+` or `=` / `-` or `_` |
 | Reset zoom | **Reset view** | `1` |
@@ -98,12 +115,19 @@ Clicking a flagged cell removes the flag and opens the cell. **Flag mode** turns
 - **Best time** is remembered for each board setup, kept apart for no-guess and classic boards.
 - **Face button** reacts to your clicks and to winning or losing.
 
+### Hints
+- **Logic only:** the hint uses just the opened numbers and the mine total, never the hidden mines, in rounds: first what the numbers say directly, then what that proves, and so on. You always get the shortest argument available, and a safe cell is preferred over a mine.
+- **Your flags are never trusted.** A wrong flag cannot mislead a hint; if a flagged cell is provably safe, the hint says your flag is wrong.
+- If nothing can be proven you are told that a guess is needed. In **No guessing** mode that does not happen unless you ran out of logic by a mistake.
+- Asking for the same hint again is free. A game won **with hints does not set a best time**; the number of hints is saved in the replay.
+
 ### Board
 - **Fits your screen:** the board picks the biggest cell size that shows the whole board without scrollbars, including Intermediate and Expert on laptop screens.
 - **Mine counter and timer** in a HUD above the board.
 - **Zoom** with buttons, Ctrl + wheel, trackpad or touch pinch, or the keyboard. Drag the board to pan.
 - **Movable board:** drag the grip bar to place it anywhere.
 - **Resizable board:** drag the corner handle.
+- **Quick guide** with `G` or the **?** button.
 - **Chording** (click a number, or `D` / `Space` on it) and **flag mode** for fast play.
 - **Full keyboard play** with a visible keyboard cursor.
 - **Scroll lock** (`C`) so the page stays still while you play with the keyboard. The page position and height are frozen while it is on, so nothing moves after a win or loss.
@@ -116,7 +140,7 @@ Clicking a flagged cell removes the flag and opens the cell. **Flag mode** turns
 - It is deterministic: the same seed and first click always give the same board, so replays still match exactly.
 
 ### Keys
-- Every action has **two key slots**: move up/down/left/right, open cell (also chords), flag, jump to board and lock / unlock view, open / close settings, mute, new game, zoom in, zoom out, reset view, reset layout.
+- Every action has **two key slots**: move up/down/left/right, open cell (also chords), flag, show a hint, jump to board and lock / unlock view, open / close settings, open / close quick guide, mute, new game, zoom in, zoom out, reset view, reset layout.
 - Actions are grouped as **Movement**, **Actions** and **View**.
 - Click a slot and press a key to set it. **Backspace** clears the slot, **Esc** (or clicking away) cancels.
 - Keys that would break the page (Tab, Esc, Enter, Backspace, Delete and modifier keys) can't be assigned. Ctrl, Cmd and Alt combinations are ignored so browser shortcuts keep working.
@@ -127,12 +151,17 @@ Every move you make (open, flag, chord) is recorded. The **Replay** section unde
 - **Watch replay / Stop replay:** plays the last finished game on the board in a loop with a VHS-style effect (scanlines, tracking bar, grain, colour fringing, a blinking PLAY label). Stop replay (or New game) deals a fresh board.
 - **Replay automatically when a game ends:** on by default; untick it if you'd rather start the replay yourself.
 - **Speed:** 0.5×, 1×, 2×, 4× or 8×.
-- **Export .misw:** saves the replay as a small `.misw` file (it is plain JSON: board size, mines, first-click mode, board type, the random seed and the list of moves). Files from older versions (format v1) still load as classic boards.
-- **Import .misw:** loads a `.misw` file and plays it, even if it was made on another board size or by someone else. Files are checked first, so a broken or foreign file gives an error message instead of a broken board.
+- **Export .mire:** saves the replay as a small `.mire` file (plain JSON: board size, mines, first-click mode, board type, the random seed, hints used and the list of moves).
+- **Import .mire:** loads a `.mire` file and plays it, even if it was made on another board size or by someone else. Files are checked first, so a broken or foreign file gives an error message instead of a broken board. Old `.misw` files from v3 are refused with a message.
 - The last replay is kept in your browser, so it is still there after a reload.
 
 ### Settings menu
 A slide-out bar on the right (open and close it with the gear button, `S` or Esc) with four tabs: **Audio**, **Theme**, **Effects** and **Keys**. Sections glide in as you open the bar or switch tab, and on narrow screens the page behind it is dimmed. The Jump-to-board key also closes it.
+
+### Files
+- **Replay `.mire`:** Replay section (see above).
+- **Settings `.mise`:** the two buttons at the top of the settings bar save or load everything saved in your browser (setup, theme, colours, fonts and sizes, volumes, effects, key bindings, layout...). Uploaded sounds, fonts, images, cursors and backgrounds are **not** included, because they stay in your browser only. Loading asks first, then reloads the page. Settings this version does not know are ignored.
+- **Board seed `.mifi`:** under the board setup. **Export board seed** is available once the first cell is open (the first click deals the board), and also while a replay plays. **Import board seed** sets up that board and opens the same first cell, so everyone starts from the same position.
 
 ### Themes and colours
 - Four built-in themes: **Novel**, **Lust**, **Combust**, **Ethereal**. Switch with the dots in the header.
@@ -179,9 +208,21 @@ It is plain HTML, CSS and JavaScript. Open `index.html` in a browser, or serve t
 
 ```
 index.html
-styles/main.css
+styles/     one file per area, loaded by main.html in this order (later files override earlier ones):
+              themes.css       shipped fonts, shared variables, the four palettes
+              base.css         base elements, controls, button ripple
+              app.css          app background, app panel, header
+              popups.css       credits and quick guide popups
+              setup.css        game setup panel and the ? button
+              board.css        frame, grip, HUD, zoom bar, board, cells, effects, info line, hint marks
+              replay.css       replay section and the VHS look
+              sidebar.css      settings bar, tabs, groups, settings file buttons, scrim
+              tabs.css         Audio, Theme, Effects and Keys tab contents
+              cursor.css       custom page-drawn cursor
+              scroll.css       scroll lock and scrollbars
+              motion.css       reduced motion (keep last)
 scripts/    one file per job, loaded by index.html in this order:
-              engine.js        game rules (mines, reveal, chord, win/lose) and the no-guess solver
+              engine.js        game rules (mines, reveal, chord, win/lose), the no-guess solver and the hint finder
               settings.js      saved settings and defaults
               audio.js         sound effects and music playback
               shell.js         shared helpers, app background video, header
@@ -189,8 +230,9 @@ scripts/    one file per job, loaded by index.html in this order:
               layout.js        movable / resizable board
               hud-zoom.js      mine counter, timer, zoom
               board.js         building and drawing the board
-              replay.js        recording, VHS replay, .misw export / import
+              replay.js        recording, VHS replay, .mire export / import
               keys.js          key bindings and the Keys tab
+              hint.js          showing a hint (the logic is findHint in engine.js)
               board-input.js   scroll lock, mouse, touch and keyboard input
               effects.js       animations and the Effects tab
               sidebar.js       the settings bar and its tabs
@@ -201,6 +243,8 @@ scripts/    one file per job, loaded by index.html in this order:
               cursor.js        custom cursors
               backgrounds.js   board and app backgrounds
               credits.js       credits popup
+              guide.js         quick guide popup
+              files.js         .mise settings and .mifi board seed export / import
               boot.js          restores saved uploads and starts the first game
 fonts/      TwofiftysixbytesRegular-5yD0j.otf, Ithaca-LVB75.ttf
 assets/     icons, cursors and images, app-icon.ico (browser tab icon)
@@ -228,9 +272,21 @@ The game itself (code and design) is the intellectual property of **Nguyen Thien
 Times New Roman, Consolas, Segoe UI and Comic Sans MS are **not** included in this project. They are only used when your device already has them installed, so there is nothing to license or redistribute according to Microsoft.
 
 ### Your own files
-Music, sounds, fonts, icons, cursors and backgrounds you upload stay in your browser only. They are never uploaded to a server or shared. You are responsible for having the right to use them. Replay files (`.misw`) contain only the moves of a game, no copyrighted material.
+Music, sounds, fonts, icons, cursors and backgrounds you upload stay in your browser only. They are never uploaded to a server or shared. You are responsible for having the right to use them. Replay (`.mire`), settings (`.mise`) and board seed (`.mifi`) files contain only game data, no copyrighted material.
 
 ### Other assets
 Sound effects in `audio/` are no copyrighted now, sources scatter around the Internet 
 
 Icons and Cursors in `assets/` follow Flaticon's copyright, provide free use for comercial and personal purpose | https://www.flaticon.com/
+
+## File formats
+
+All three are UTF-8 JSON and start with a `format` field. They are checked before use.
+
+| Extension | `format` | What it holds |
+|---|---|---|
+| `.mire` | `mire` (version 1) | `rows`, `cols`, `mines`, `safety`, `noGuess`, `seed`, `hints`, `result`, `ms` and `moves` (a list of `[kind, cell, ms]`; kind is `r` open, `f` flag, `c` chord) |
+| `.mise` | `mise` (version 1) | `settings`: the saved settings object |
+| `.mifi` | `mifi` (version 1) | `rows`, `cols`, `mines`, `safety`, `noGuess`, `seed` and `first` (the cell opened first; the board is dealt from it) |
+
+A board is fully decided by its size, mines, first-click mode, board type, seed and first cell. A future version that changes the dealing or the solver would bump the file version.

@@ -184,6 +184,23 @@ board.addEventListener('keydown', e => {
 // global keys: work from anywhere except text boxes and the credits popup
 document.addEventListener('keydown', e => {
     if (capturing || e.repeat || isTyping(e.target) || !$('#credit').hidden) return;
+    if (!$('#guide').hidden) { // while the guide is open, only its own key (and Esc) does anything
+        if (isKey('guide', e)) {
+            e.preventDefault();
+            toggleGuide(false);
+        }
+        return;
+    }
+    if (isKey('guide', e)) {
+        e.preventDefault();
+        toggleGuide(true);
+        return;
+    }
+    if (isKey('hint', e)) {
+        e.preventDefault();
+        showHint(true);
+        return;
+    }
     // the board key also closes the settings menu
     if (isKey('focus', e) && isOpen()) toggleSettings(false);
     if (isKey('focus', e)) {

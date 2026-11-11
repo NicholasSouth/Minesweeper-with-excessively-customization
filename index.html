@@ -3,9 +3,21 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Minesweeper</title>
+  <title>Minesweeper v4.0</title>
   <link rel="icon" href="assets/app-icon.ico" sizes="any">
-  <link rel="stylesheet" href="styles/main.css">
+  <!-- one file per area; keep this order, later files override earlier ones -->
+  <link rel="stylesheet" href="styles/themes.css">
+  <link rel="stylesheet" href="styles/base.css">
+  <link rel="stylesheet" href="styles/app.css">
+  <link rel="stylesheet" href="styles/popups.css">
+  <link rel="stylesheet" href="styles/setup.css">
+  <link rel="stylesheet" href="styles/board.css">
+  <link rel="stylesheet" href="styles/replay.css">
+  <link rel="stylesheet" href="styles/sidebar.css">
+  <link rel="stylesheet" href="styles/tabs.css">
+  <link rel="stylesheet" href="styles/cursor.css">
+  <link rel="stylesheet" href="styles/scroll.css">
+  <link rel="stylesheet" href="styles/motion.css">
 </head>
 <body>
   <!-- App background: if choose video, its loop, muted, 
@@ -36,7 +48,10 @@
     </header>
 
     <!-- difficulty set up -->
-    <section class="panel" aria-label="Game setup">
+    <section class="panel" id="setup" aria-label="Game setup">
+      <!-- quick guide: also opens with the guide key (G) -->
+      <button id="help-btn" class="help-btn" type="button" aria-label="Quick guide"
+        aria-controls="guide" aria-expanded="false" title="Quick guide (G)">?</button>
       <div class="row">
         <label>Board 
           <select id="diff">
@@ -80,7 +95,16 @@
           <img class="btn-ico" src="assets/flag-icon.png" alt="" width="18" height="18"> 
           Flag mode
         </button>
+        <!-- shows a move that logic can prove (key H) -->
+        <button id="hint-btn" type="button" title="Show a hint (H)">Hint</button>
       </div>
+      <!-- board seed: the same board for everyone (.mifi) -->
+      <div class="row">
+        <button id="seed-export" type="button" class="small">Export board seed .mifi</button>
+        <button id="seed-import" type="button" class="small">Import board seed .mifi</button>
+        <input id="seed-file" type="file" accept=".mifi,application/json" hidden>
+      </div>
+      <p id="seed-msg" class="hint" role="status" aria-live="polite"></p>
     </section>
 
     <!-- the gaming area -->
@@ -121,7 +145,7 @@
           </video>
           <div 
             id="board" role="grid" tabindex="0" 
-            aria-label="Minesweeper board. Arrow keys move, D or space reveals (and chords an opened number), F flags, 
+            aria-label="Minesweeper board. Arrow keys move, D or space reveals (and chords an opened number), F flags, H shows a hint, G opens the quick guide, 
             C jumps to the board and locks scrolling, S toggles settings, M mutes, R restarts, plus and minus zoom, 1 resets the view, 2 resets the layout. 
             C from anywhere jumps back to the board.">
           </div>
@@ -147,7 +171,7 @@
         <span id="best"></span>
       </p>
 
-      <!-- replay section: watch, save as .misw, load a .misw -->
+      <!-- replay section: watch, save as .mire, load a .mire -->
       <section class="panel" id="replay" aria-label="Replay">
         <h2>Replay</h2>
         <p id="rp-info" class="hint"></p>
@@ -157,9 +181,9 @@
           <label class="check"><input id="rp-auto" type="checkbox"> Replay automatically when a game ends</label>
         </div>
         <div class="row">
-          <button id="rp-export" type="button">Export .misw</button>
-          <button id="rp-import" type="button">Import .misw</button>
-          <input id="rp-file" type="file" accept=".misw,application/json" hidden>
+          <button id="rp-export" type="button">Export .mire</button>
+          <button id="rp-import" type="button">Import .mire</button>
+          <input id="rp-file" type="file" accept=".mire,application/json" hidden>
         </div>
         <p id="rp-msg" class="hint" role="status" aria-live="polite"></p>
       </section>
@@ -167,9 +191,9 @@
         Left-click or tap to open a cell (on a flag it removes the flag and opens the cell). 
         Right-click or long-press to flag. 
         Click a satisfied number to chord. 
-        Keyboard (default keys): arrows move, D or Space opens (and chords an opened number), F flags, R restarts. 
+        Keyboard (default keys): arrows move, D or Space opens (and chords an opened number), F flags, H shows a hint, R restarts. 
         C jumps back to the board (on your last cell, or the first one) and locks the page so nothing scrolls except the board; press C again to unlock. 
-        S opens and closes the settings, M mutes and unmutes. 
+        S opens and closes the settings, M mutes and unmutes, G opens the quick guide. 
         Every key can be changed in Settings, Keys tab. 
         Drag the board to pan. 
         Zoom with the buttons, Ctrl + wheel, pinch, or + and - on the keyboard; 1 resets the view. 2 resets the layout. 
@@ -183,6 +207,14 @@
   <aside id="settings" class="settings" role="region" aria-label="Settings" data-open="false">
     <div class="sb-head">
       <h2>Settings</h2>
+    </div>
+
+    <!-- settings file (.mise): everything below except uploaded sounds, fonts and images -->
+    <div class="sb-file">
+      <button id="mise-export" type="button" class="small">Export settings .mise</button>
+      <button id="mise-import" type="button" class="small">Import settings .mise</button>
+      <input id="mise-file" type="file" accept=".mise,application/json" hidden>
+      <p id="mise-msg" class="hint" role="status" aria-live="polite"></p>
     </div>
 
     <!-- navigation tab -->
@@ -477,6 +509,7 @@
   <div id="credit" class="credit" role="dialog" aria-modal="true" aria-labelledby="credit-text" hidden>
     <div class="credit-card">
       <h2>Minesweeper</h2>
+      <p>Version 4.0</p>
       <p id="credit-text">Intellectual property of Nguyen Thien Nhan, HCMUTE-24110114</p>
       <h3>Music</h3>
       <ul>
@@ -509,6 +542,15 @@
     </div>
   </div>
 
+  <!-- quick guide popup (? button or the guide key) -->
+  <div id="guide" class="credit" role="dialog" aria-modal="true" aria-labelledby="guide-title" hidden>
+    <div class="guide-card">
+      <h2 id="guide-title">Quick guide</h2>
+      <div id="guide-body" class="guide-body"></div>
+      <button id="guide-close" type="button">Close</button>
+    </div>
+  </div>
+
   <!-- the custom mouse cursor: three pictures, the one for the current state is shown -->
   <div id="cursor" class="cursor" data-state="normal" aria-hidden="true" hidden>
     <img data-k="normal" alt="" draggable="false">
@@ -528,6 +570,7 @@
   <script src="scripts/board.js" defer></script>
   <script src="scripts/replay.js" defer></script>
   <script src="scripts/keys.js" defer></script>
+  <script src="scripts/hint.js" defer></script>
   <script src="scripts/board-input.js" defer></script>
   <script src="scripts/effects.js" defer></script>
   <script src="scripts/sidebar.js" defer></script>
@@ -538,6 +581,8 @@
   <script src="scripts/cursor.js" defer></script>
   <script src="scripts/backgrounds.js" defer></script>
   <script src="scripts/credits.js" defer></script>
+  <script src="scripts/guide.js" defer></script>
+  <script src="scripts/files.js" defer></script>
   <script src="scripts/boot.js" defer></script>
 </body>
 </html>

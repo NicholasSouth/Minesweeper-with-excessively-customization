@@ -1,0 +1,34 @@
+/* Custom page-drawn cursor */
+
+/* Custom cursor */
+/* while the page-drawn cursor is active (scripts adds .fakecur) the system one is hidden */
+html.fakecur, html.fakecur * { cursor: none !important; }
+.cursor {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 9999;
+    pointer-events: none;
+    will-change: transform;
+}
+.cursor img {
+    display: none;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: auto;
+    height: calc(var(--cursz) * var(--k, 1));   /* same height for all, times each Scale */
+    transform-origin: 0 0;
+    transition: transform .08s ease-out;
+    filter: drop-shadow(0 1px 2px var(--shadow));
+}
+.cursor img[data-hot="c"] { translate: -50% -50%; transform-origin: 50% 50%; }
+.cursor[data-state="normal"] img[data-k="normal"],
+.cursor[data-state="select"] img[data-k="select"],
+.cursor[data-state="flag"] img[data-k="flag"],
+.cursor[data-state="hold"] img[data-k="hold"],
+.cursor[data-state="text"] img[data-k="text"] { display: block; }
+/* a small swing when pressing */
+.cursor[data-down][data-state="normal"] img,
+.cursor[data-down][data-state="select"] img,
+.cursor[data-down][data-state="flag"] img { transform: rotate(-14deg) scale(.9); }

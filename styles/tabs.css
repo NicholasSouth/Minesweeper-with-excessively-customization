@@ -1,0 +1,100 @@
+/* Settings tab contents: Audio, Theme, Effects, Keys */
+
+/* Audio tab: Volume (.vol is also used by cursor size and dimming) */
+.vol {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+}
+.vol output { color: var(--text); }
+.vol.sub { padding-left: 14px; border-left: 2px solid var(--line); }
+.vol input[type=range] {
+    grid-column: 1 / -1;
+    width: 100%;
+}
+/* Audio tab: Sounds (.snd rows are also used by cursors, icons and backgrounds) */
+.snd {
+    display: grid;
+    gap: 6px;
+    padding: 10px 0;
+    border-top: 1px solid var(--line);
+}
+.snd-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    align-items: baseline;
+}
+.snd-label { font-weight: 600; font-size: .9rem; }
+.snd-name {
+    font-size: .8rem;
+    color: var(--muted);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.snd-btns { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.snd input[type=file] { display: none; }
+.snd[data-active] .snd-label { color: var(--accent); }
+
+/* Theme tab: Colors */
+.colors {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 12px;
+}
+.colors label {
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 8px;
+}
+input[type=color] {
+    width: 34px;
+    height: 28px;
+    padding: 2px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+/* Theme tab: Fonts */
+.fontbox { display: grid; gap: 8px; }
+.fontbox + .fontbox { padding-top: 14px; border-top: 1px solid var(--line); }
+/* Theme tab: Cursors (hotspot + scale rows) */
+.hot { grid-template-columns: auto 1fr; align-items: center; gap: 8px; }
+.hot input[type=range] { width: 100%; }
+/* Theme tab: Icons and images (thumbnail in each row) */
+.thumb {
+    width: 32px;
+    height: 32px;
+    flex: none;
+    border-radius: 8px;
+    background: var(--rev) center / contain no-repeat;
+}
+.thumb.is-video { display: grid; place-items: center; }
+.thumb.is-video::after {
+    content: '';
+    margin-left: 4px;
+    border-left: 12px solid var(--text);
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+}
+
+/* Effects tab: switches (scripts sets data-fx-* on <html>) */
+html[data-fx-cell="off"] .c.a-rev { animation: none; }
+html[data-fx-flag="off"] .c.a-flag,
+html[data-fx-flag="off"] .c.a-unflag { animation: none; }
+html[data-fx-win="off"] #face[data-face="win"] { animation: none; }
+html[data-fx-lose="off"] #face[data-face="die"] { animation: none; }
+
+/* Keys tab: groups are .sb-sec like the other tabs; rows match the .snd rows */
+.keys { display: grid; gap: 0; }
+.keyrow {
+    display: grid;
+    grid-template-columns: 1fr 6.5rem 6.5rem;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 0;
+    border-top: 1px solid var(--line);
+}
+.keylabel { font-weight: 600; font-size: .9rem; min-width: 0; }
+.keyslot { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.keyslot[aria-pressed=true] { border-color: var(--accent); color: var(--accent); }

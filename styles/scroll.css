@@ -1,0 +1,42 @@
+/* Scroll lock and scrollbars */
+
+/* scroll lock (C): the page and sidebar stop scrolling, the board window still pans */
+html.locked, html.locked body { overflow: hidden; overscroll-behavior: none; }
+html.locked { padding-right: var(--sbw, 0px); min-height: var(--lock-h, 0px); overflow-anchor: none; } /* replaces the vanished page scrollbar */
+html.locked .settings { overflow-y: hidden; }
+.settings { scrollbar-gutter: stable; } /* the sidebar does not shift when its scrollbar hides */
+.lockbadge {
+    position: fixed;
+    left: 50%;
+    bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%);
+    z-index: 25;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--bg);
+    font-size: .8rem;
+    font-weight: 600;
+    box-shadow: 0 4px 14px -4px var(--shadow);
+    pointer-events: none;
+    white-space: nowrap;
+}
+.lockbadge[hidden] { display: none; }
+.lockbadge kbd { font: inherit; padding: 0 6px; border-radius: 6px; background: var(--bg); color: var(--text); }
+
+/* Scrollbars: slim, in the theme colors (Settings > Theme > Scrollbars changes them) */
+*::-webkit-scrollbar { width: var(--sbsz); height: var(--sbsz); }
+*::-webkit-scrollbar-track,
+*::-webkit-scrollbar-corner { background: var(--sbtrack); }
+*::-webkit-scrollbar-thumb {
+    background: var(--sbthumb);
+    border-radius: 999px;
+    /* the track color rings the thumb so it looks inset */
+    border: 1px solid var(--sbtrack);
+}
+*::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+/* Firefox only knows thin / auto, so sizes up to 8 px map to thin */
+@supports (-moz-appearance: none) {
+    html { scrollbar-color: var(--sbthumb) var(--sbtrack); }
+    html[data-sb="thin"] * { scrollbar-width: thin; }
+}

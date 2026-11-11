@@ -92,6 +92,7 @@ function draw() {
             d.textContent = tx;
             d.setAttribute('aria-label', 'Row ' + (row + 1) + ', column ' + (col + 1) + ', ' + lb);
             d._c = false;
+            d._h = ''; // the new class name wiped any hint classes
         }
         // keyboard cursor toggles separately so moving it never restarts an animation
         const isCur = i === cur;
@@ -99,15 +100,26 @@ function draw() {
             d.classList.toggle('cur', isCur);
             d._c = isCur;
         }
+        // hint marks toggle separately too
+        const hc = hintMap && hintMap[i] || '';
+        if (d._h !== hc) {
+            d.classList.remove('h-safe', 'h-mine', 'h-src');
+            if (hc) d.classList.add('h-' + hc);
+            d._h = hc;
+        }
     }
 }
 /* board: game flow */
-function start() {
+// opts.seed: deal this board (from a .mifi file) instead of a random one
+function start(opts) {
     const { r, c, m } = cfg();
     clearInterval(tick);
     stopReplay();
     moves = [];
-    g = newGame(r, c, m, S.safety, (Math.random() * 4294967296) >>> 0, S.noGuess);
+    clearHint();
+    hintsUsed = 0;
+    const seed = opts && Number.isInteger(opts.seed) ? opts.seed : (Math.random() * 4294967296) >>> 0;
+    g = newGame(r, c, m, S.safety, seed, S.noGuess);
     const dims = r + 'x' + c;
     cur = 0; // a new board puts the keyboard cursor back on the first cell...
     if (dims !== lastDims) {
@@ -136,7 +148,9 @@ function end() {
     if (won) {
         b.won++;
         m = 'Cleared in ' + (g.ms / 1000).toFixed(1) + ' s.';
-        if (b.bestMs === null || g.ms < b.bestMs) {
+        if (hintsUsed) { // a game that used hints is not a fair record
+            m += ' ' + hintsUsed + (hintsUsed > 1 ? ' hints' : ' hint') + ' used, so no record.';
+        } else if (b.bestMs === null || g.ms < b.bestMs) {
             b.bestMs = g.ms;
             m += ' New best!';
         }

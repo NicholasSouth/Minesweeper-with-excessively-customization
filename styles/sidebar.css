@@ -1,0 +1,156 @@
+/* Settings sidebar: bar, close button, tabs, groups, settings file buttons, scrim */
+
+/* Settings sidebar */
+/* retractable right bar; closed = slid off-screen + visibility:hidden (leaves the tab order) */
+:root { --sb-w: min(calc(100vw - 58px), 440px); } /* leaves room for the close button on phones */
+.settings {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    width: var(--sb-w);
+    padding: calc(16px + env(safe-area-inset-top, 0px)) 18px 18px;
+    overflow-y: auto;
+    display: grid;
+    align-content: start;
+    gap: 18px;
+    background: var(--surface);
+    box-shadow: -18px 0 40px -18px var(--shadow);
+    transform: translateX(100%);
+    visibility: hidden;
+    transition: transform .4s cubic-bezier(.22, 1, .36, 1), visibility 0s linear .4s;
+}
+.settings[data-open="true"] {
+    transform: none;
+    visibility: visible;
+    transition: transform .4s cubic-bezier(.22, 1, .36, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+    .settings, .settings[data-open="true"] { transition: none; }
+}
+.settings h2 { margin: 0; font-size: 1.1rem; }
+.settings h3 { margin: 0; font-size: .95rem; }
+.settings select { width: 100%; }
+.hint { margin: 0; font-size: .8rem; color: var(--muted); }
+.hint:empty { display: none; }
+.sb-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+/* 
+    close button: its own component, not inside the sidebar. It sits at the top, just left of the
+    sidebar's left edge, and slides in and out with it (scripts mirrors the sidebar's data-open).
+*/
+#settings-close {
+    position: fixed;
+    top: calc(12px + env(safe-area-inset-top, 0px));
+    right: calc(var(--sb-w) + 10px); /* = sidebar width + 10px gap */
+    z-index: 21; /* above the sidebar and the scrim */
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border-radius: 50%;
+    font-size: 0;
+    background: var(--hid) url("../assets/x.png") center / 50% no-repeat;
+    box-shadow: 0 4px 14px -4px var(--shadow);
+    /* closed: parked off-screen to the right (where the sidebar waits), not focusable */
+    transform: translateX(calc(var(--sb-w) + 60px));
+    opacity: 0;
+    visibility: hidden;
+    transition: transform .4s cubic-bezier(.22, 1, .36, 1), opacity .25s ease, 
+                visibility 0s linear .4s;
+}
+#settings-close[data-open="true"] {
+    transform: none;
+    opacity: 1;
+    visibility: visible;
+    transition: transform .4s cubic-bezier(.22, 1, .36, 1), opacity .25s ease;
+}
+#settings-close:hover { background-color: var(--hidh); }
+@media (prefers-reduced-motion: reduce) {
+    #settings-close, #settings-close[data-open="true"] { transition: none; }
+}
+/* tabs */
+.tabs {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    background: var(--rev);
+    border-radius: 999px;
+}
+.tabs button {
+    flex: 1;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--muted);
+    font-size: .85rem;
+    font-weight: 600;
+}
+.tabs button:hover { background: var(--hid); }
+.tabs button[aria-selected=true] { background: var(--hid); color: var(--text); }
+.tabpanel { display: grid; gap: 12px; }
+/* 
+    setting groups: a dim squircle that lights up in the theme's color
+    when a setting inside it is used (scripts sets data-lit) 
+*/
+.sb-sec {
+    display: grid;
+    gap: 12px;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    background: color-mix(in srgb, var(--rev) 45%, transparent);
+    transition: border-color .25s, background-color .25s, box-shadow .25s;
+}
+@supports (corner-shape: squircle) {
+    .sb-sec { corner-shape: squircle; border-radius: 30px; }
+}
+.sb-sec[data-lit] {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 9%, var(--rev));
+    box-shadow:
+        0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent),
+        0 0 22px -8px var(--accent);
+}
+
+/* groups glide in one after another, and again on every tab switch */
+@keyframes sb-in { from { opacity: 0; transform: translateX(26px); } }
+.settings[data-open="true"] .sb-head,
+.settings[data-open="true"] .sb-file,
+.settings[data-open="true"] .tabs,
+.settings[data-open="true"] .tabpanel > .sb-sec {
+    /* "backwards" (not "both"): once the slide-in ends, no animation is left running */
+    animation: sb-in .5s cubic-bezier(.22, 1, .36, 1) backwards;
+    animation-delay: calc(var(--i, 0) * 60ms + 80ms);
+}
+.settings[data-open="true"] .tabs { --i: 1; }
+.tabpanel > .sb-sec:nth-child(1) { --i: 2; }
+.tabpanel > .sb-sec:nth-child(2) { --i: 3; }
+.tabpanel > .sb-sec:nth-child(3) { --i: 4; }
+.tabpanel > .sb-sec:nth-child(4) { --i: 5; }
+.tabpanel > .sb-sec:nth-child(n+5) { --i: 6; }
+
+/* Scrim (behind the sidebar on narrow screens) */
+.scrim { display: none; }
+@media (max-width: 700px) {
+    .scrim {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 19;
+        background: color-mix(in srgb, var(--bg) 60%, transparent);
+        backdrop-filter: blur(2px);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity .3s ease;
+    }
+    .settings[data-open="true"] + .scrim { opacity: 1; pointer-events: auto; }
+}
+
+/* settings file buttons at the top of the sidebar */
+.sb-file { display: flex; flex-wrap: wrap; gap: 8px; }
+.sb-file .hint { flex-basis: 100%; }
