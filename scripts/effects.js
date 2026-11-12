@@ -6,10 +6,12 @@
 function burst(cell) { // explosion: fireball, shockwaves, sparks
     const fx = document.createElement('div');
     fx.className = 'fx';
-    fx.style.left = (cell.offsetLeft + cell.offsetWidth / 2) + 'px';
-    fx.style.top = (cell.offsetTop + cell.offsetHeight / 2) + 'px';
+    // the cell sits at a known spot in the grid, so no layout read is needed
+    const ci = +cell.dataset.i;
+    fx.style.left = ((ci % g.cols + .5) * csNow) + 'px';
+    fx.style.top = (((ci / g.cols | 0) + .5) * csNow) + 'px';
     fx.innerHTML = '<i class="core"></i><i class="ring"></i><i class="ring r2"></i>';
-    const cols = ['var(--danger)', 'var(--n5)', '#ffd166', 'var(--text)'];
+    const cols = ['var(--danger)', 'var(--n5)', 'var(--fx-fire)', 'var(--text)'];
     for (let n = 0; n < 22; n++) {
         const sp = document.createElement('i'), a = rnd(0, Math.PI * 2), d = csNow * rnd(1.2, 3.6);
         sp.className = 'spark';
@@ -22,6 +24,36 @@ function burst(cell) { // explosion: fireball, shockwaves, sparks
     }
     board.appendChild(fx);
     setTimeout(() => fx.remove(), 1200);
+}
+// new board, two effects (each has its own switch in the Effects tab, colors are --glow1/--glow2):
+// 1) a light sweeps once around the whole game panel (HUD + board) with a soft glow;
+// 2) a swoosh wipes left to right and reveals the new board.
+// Both only animate transform / opacity, so they stay on the compositor.
+function edgeGlow() {
+    document.querySelectorAll('.edge-glow').forEach(e => e.remove());
+    if (!S.fx.glow || reduce.matches || !frame.offsetWidth) return;
+    const el = document.createElement('div');
+    el.className = 'edge-glow';
+    el.setAttribute('aria-hidden', 'true');
+    // the gradient square must cover the panel at any angle: its diagonal
+    el.style.setProperty('--gd', Math.ceil(Math.hypot(frame.offsetWidth, frame.offsetHeight)) + 'px');
+    el.innerHTML = '<b><i></i></b>';
+    el.onanimationend = e => { if (e.target === el) el.remove(); };
+    frame.appendChild(el);
+}
+function boardWipe() {
+    document.querySelectorAll('.board-wipe').forEach(e => e.remove());
+    if (!S.fx.wipe || reduce.matches || !wrap.offsetWidth) return;
+    const el = document.createElement('div');
+    el.className = 'board-wipe';
+    el.setAttribute('aria-hidden', 'true');
+    el.style.left = wrap.offsetLeft + 'px';
+    el.style.top = wrap.offsetTop + 'px';
+    el.style.width = wrap.offsetWidth + 'px';
+    el.style.height = wrap.offsetHeight + 'px';
+    el.innerHTML = '<i></i>';
+    el.onanimationend = e => { if (e.target.parentNode === el) el.remove(); };
+    frame.appendChild(el);
 }
 function splash(i) { // rock splash: rings, droplets, stone chips
     if (!S.fx.cell || reduce.matches) return;
@@ -76,9 +108,10 @@ function shake() {
         { transform: 'translate(' + x + 'px,' + y + 'px) rotate(' + r + 'deg)' })), 
         { duration: 520, easing: 'ease-out' });
 }
-function boomFx() {
+function boomFx(r) {
     if (reduce.matches || !S.fx.lose) return;
-    const cell = cells[g.boom], r = cell.getBoundingClientRect();
+    const cell = cells[g.boom];
+    r = r || cell.getBoundingClientRect();
     burst(cell);
     shake();
     const fl = document.createElement('div');

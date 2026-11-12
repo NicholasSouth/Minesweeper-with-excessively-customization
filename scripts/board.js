@@ -23,7 +23,16 @@ function build() {
     }
     fit();
     draw();
+    edgeGlow();
+    boardWipe();
 }
+// will-change keeps ~100 mine pops on the compositor, but it also keeps ~100 layers alive for as long as the
+// class stays on the cell. Dropping the class when its animation ends frees them (nothing visible changes:
+// these animations have no end fill, the cell already rests in its normal style)
+board.addEventListener('animationend', e => {
+    if (e.animationName === 'mine-pop') e.target.classList.remove('a-mine');
+    else if (e.animationName === 'boom') e.target.classList.remove('a-boom');
+});
 function fit() {
     // biggest cell that shows the whole board with no scrollbar: the board has to fit the
     // width of the app card and the 72vh height limit of .wrap (zoom 1 = no scrollbars)
@@ -71,8 +80,8 @@ function draw() {
             const row = (i / g.cols) | 0, col = i % g.cols, dist = Math.hypot(row - orow, col - ocol);
             let an = '', dl = 0;
             if (first) {
-                an = 'a-in';
-                dl = Math.min((row + col) * 10, 450);
+                // no per-cell intro: hundreds of cells animating at once was the costly part.
+                // A single glow runs around the board edge instead (see edgeGlow in effects.js)
             } else if (s === 1) {
                 an = 'a-rev';
                 dl = Math.min(dist * 22, 700);

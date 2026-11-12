@@ -9,21 +9,21 @@
 */
 const ASSETS = [
     // icons
-    { id: 'face-default', label: 'Face: normal',                     v: '--ic-face-default', def: 'assets/face-default.png' },
-    { id: 'face-oh',      label: 'Face: surprised (while pressing)', v: '--ic-face-oh',      def: 'assets/face-oh.png' },
-    { id: 'face-win',     label: 'Face: win',                        v: '--ic-face-win',     def: 'assets/face-win.png' },
-    { id: 'face-die',     label: 'Face: lose',                       v: '--ic-face-die',     def: 'assets/face-die.png' },
-    { id: 'mute-on',      label: 'Sound button: on',                 v: '--ic-mute-on',      def: 'assets/speaker-default.png' },
-    { id: 'mute-off',     label: 'Sound button: off',                v: '--ic-mute-off',     def: 'assets/speaker-mute.png' },
-    { id: 'settings',     label: 'Settings button',                  v: '--ic-settings',     def: 'assets/settings.png' },
-    { id: 'flag-icon',    label: 'Flag mode button icon',            img: '#flagmode .btn-ico', def: 'assets/flag-icon.png' },
-    { id: 'flag-cell',    label: 'Flag on the board',                v: '--ic-flag-cell',    def: 'assets/flag-cell.png' },
+    { id: 'face-default', label: 'Face: normal',                     v: '--ic-face-default', def: 'assets/face-default.webp' },
+    { id: 'face-oh',      label: 'Face: surprised (while pressing)', v: '--ic-face-oh',      def: 'assets/face-oh.webp' },
+    { id: 'face-win',     label: 'Face: win',                        v: '--ic-face-win',     def: 'assets/face-win.webp' },
+    { id: 'face-die',     label: 'Face: lose',                       v: '--ic-face-die',     def: 'assets/face-die.webp' },
+    { id: 'mute-on',      label: 'Sound button: on',                 v: '--ic-mute-on',      def: 'assets/speaker-default.webp' },
+    { id: 'mute-off',     label: 'Sound button: off',                v: '--ic-mute-off',     def: 'assets/speaker-mute.webp' },
+    { id: 'settings',     label: 'Settings button',                  v: '--ic-settings',     def: 'assets/settings.webp' },
+    { id: 'flag-icon',    label: 'Flag mode button icon',            img: '#flagmode .btn-ico', def: 'assets/flag-icon.webp' },
+    { id: 'flag-cell',    label: 'Flag on the board',                v: '--ic-flag-cell',    def: 'assets/flag-cell.webp' },
     // cursors
-    { id: 'cur-normal', label: 'Cursor: normal',                                cursor: true, key: 'normal', def: 'assets/cursor-normal.png' },
-    { id: 'cur-select', label: 'Cursor: select (left click held)',              cursor: true, key: 'select', def: 'assets/cursor-select.png' },
-    { id: 'cur-flag',   label: 'Cursor: flag (right click or flag mode)',       cursor: true, key: 'flag',   def: 'assets/cursor-flag.png' },
-    { id: 'cur-hold',   label: 'Cursor: holding (dragging the grip bar)',       cursor: true, key: 'hold',   def: 'assets/cursor-hold.png', hot: 'c' },
-    { id: 'cur-text',   label: 'Cursor: text and resize',                       cursor: true, key: 'text',   def: 'assets/cursor-text.png', hot: 'c' },
+    { id: 'cur-normal', label: 'Cursor: normal',                                cursor: true, key: 'normal', def: 'assets/cursor-normal.webp' },
+    { id: 'cur-select', label: 'Cursor: select (left click held)',              cursor: true, key: 'select', def: 'assets/cursor-select.webp' },
+    { id: 'cur-flag',   label: 'Cursor: flag (right click or flag mode)',       cursor: true, key: 'flag',   def: 'assets/cursor-flag.webp' },
+    { id: 'cur-hold',   label: 'Cursor: holding (dragging the grip bar)',       cursor: true, key: 'hold',   def: 'assets/cursor-hold.webp', hot: 'c' },
+    { id: 'cur-text',   label: 'Cursor: text and resize',                       cursor: true, key: 'text',   def: 'assets/cursor-text.webp', hot: 'c' },
     // backgrounds
     { id: 'board-bg',     label: 'Board image or video',             bg: 'board', video: true, def: '' },
     { id: 'app-bg',       label: 'App image or video',               bg: 'app',   video: true, def: '' }

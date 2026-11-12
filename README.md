@@ -1,4 +1,4 @@
-# Minesweeper (with excessive customization) v4.0
+# Minesweeper (with excessive customization) v5.0
 
 A browser Minesweeper with a lot of knobs: custom boards, a movable and resizable board, zoom, themes, fonts, sounds, cursors, backgrounds, rebindable keys, and a replay of every finished game, hints, a quick guide, and three file types to save and share replays, settings and board seeds.
 
@@ -8,7 +8,35 @@ No install, no build step, no account. Everything runs in your browser.
 
 ---
 
-## What's new in v4.0
+## What's new in v5.0
+
+This version is about animation: smoother, cheaper to run, and customizable. The rules and the file formats are unchanged.
+
+- **New board glow:** starting a new board sends a light once around the **whole game panel** (HUD, zoom bar and board), with a soft halo. It takes about 0.7 seconds. It replaces the old effect where every cell popped in one by one, which animated hundreds of cells at once.
+- **New board wipe:** a swoosh sweeps **left to right** and reveals the new board behind it (about 0.55 seconds). A panel-coloured cover hides the board and slides away, and its trailing edge is the glowing streak.
+- **Both are customizable:**
+  - **Settings > Effects** has two new switches: *Glow around the game panel on a new board* and *Swoosh wipe that reveals a new board*. Both are on by default and independent of each other.
+  - **Settings > Theme > Colors** has two new colours, **Glow tail** and **Glow head**. They colour both the glow and the swoosh, are kept per theme, and each theme has its own default pair (for example violet to pink on Lust). *Reset colors* and *Reset all appearance* bring them back.
+- **Lighter cell reveal:** the reveal pop no longer animates a brightness filter. A filter per cell made the browser create a layer for every cell on a big flood fill. It is now scale and fade only.
+- **Lighter VHS replay:** same look (scanlines, vignette, tracking bar, grain, colour fringing, jitter, PLAY label), cheaper to draw.
+  - The tracking bar moves with `transform` instead of `top`, and no longer uses `backdrop-filter: blur`.
+  - The grain no longer uses `mix-blend-mode`. Its colour comes from `--vhs-grain` and the noise image only supplies the alpha.
+  - The board's blur and two drop-shadows are gone. The red/cyan fringe is now a text-shadow on the numbers plus a fringe on the screen edges. The colour grade (`saturate` and `contrast`) stays.
+  - New: a thin **tear line** that hops down the picture now and then.
+- **Explosion:** looks the same as in v4.0 (fireball, two shockwaves, sparks, shake, red flash, popping mines), but is cheaper to run:
+  - the shockwave rings are scaled instead of animating `border-width`, and the red halo on the mine you hit is drawn once and only faded,
+  - the mine pops stay on the compositor, and their layers are released as soon as each pop ends (before, about 100 stayed alive until the next game),
+  - popping mines no longer run a colour transition at the same time,
+  - the explosion starts before the sound is played, and saving the replay to browser storage is delayed by a moment, so neither lands in the first frame of the explosion.
+- **No hardcoded colours in the stylesheets:** every colour now comes from a variable defined in `styles/themes.css`. New variables: `--glow1`, `--glow2` (per theme), `--mask`, `--vhs-bar-core` and `--vhs-grain` (shared). `color-mix` is now only used to fade a colour to transparent; the places that used it to make a new colour were changed:
+  - rock-splash droplets use `--n1`,
+  - a highlighted settings section uses `--rev` with the accent border,
+  - the hover colour of hidden cells and the muted text colour, when you pick custom colours, are now plain hex values worked out in `theme-colors.js` (`mixHex`),
+  - the explosion's yellow spark uses `--fx-fire`.
+- The new effects only animate `transform` and `opacity`, and are skipped when your system's reduce-motion setting is on.
+
+<details>
+<summary>Previous version: v4.0</summary>
 
 - **Hints (`H`):** press `H` (or the **Hint** button) and the game marks a move that logic can prove from what is on the board. A **green glow** is a safe cell, a **red glow** is a mine, and **dashed rings** show the numbers the hint is built from. A hint never moves your keyboard cursor or the view. See [Hints](#hints).
 - **Quick guide (`G` or `?`):** a popup with the goal, the controls (it shows your own key bindings), hints and files. Open it with `G` or the **?** button in the top right corner of the board setup panel; close it with `G`, `Esc`, **Close** or a click outside.
@@ -20,8 +48,10 @@ No install, no build step, no account. Everything runs in your browser.
 - **Stylesheet split:** `styles/main.css` is now 12 smaller files, one per area (see [Running it locally](#running-it-locally)). The page looks exactly the same.
 - New keys in Settings > Keys: **Show a hint** (`H`) and **Open / close quick guide** (`G`).
 
+</details>
+
 <details>
-<summary>Previous version: v3.2</summary>
+<summary>Earlier version: v3.2</summary>
 
 - **One key for chord, one key for the board:** there is no separate chord key any more. **`D` / `Space` (Open cell) now also chords** when the cursor is on an opened number, the same as clicking it. **`C` is now "Jump to board, lock / unlock view"**: it brings the keyboard back to the board and locks scrolling in one press (it also closes the settings menu); press `C` again to unlock. The separate **Chord** and **Lock** actions are gone from Settings > Keys, and the lock badge shows whichever key you bound to Jump to board. A key you had saved for Jump to board is kept.
 - **Steady HUD:** the mine counter, face and timer no longer shift as the numbers change or when you switch fonts. The face now sits in the exact centre, and the counter and timer have a fixed width.
@@ -148,7 +178,7 @@ Clicking a flagged cell removes the flag and opens the cell. **Flag mode** turns
 
 ### Replay
 Every move you make (open, flag, chord) is recorded. The **Replay** section under the board is where you use it:
-- **Watch replay / Stop replay:** plays the last finished game on the board in a loop with a VHS-style effect (scanlines, tracking bar, grain, colour fringing, a blinking PLAY label). Stop replay (or New game) deals a fresh board.
+- **Watch replay / Stop replay:** plays the last finished game on the board in a loop with a VHS-style effect (scanlines, tracking bar, grain, colour fringing, tape tear, a blinking PLAY label). Stop replay (or New game) deals a fresh board.
 - **Replay automatically when a game ends:** on by default; untick it if you'd rather start the replay yourself.
 - **Speed:** 0.5×, 1×, 2×, 4× or 8×.
 - **Export .mire:** saves the replay as a small `.mire` file (plain JSON: board size, mines, first-click mode, board type, the random seed, hints used and the list of moves).
@@ -165,7 +195,7 @@ A slide-out bar on the right (open and close it with the gear button, `S` or Esc
 
 ### Themes and colours
 - Four built-in themes: **Novel**, **Lust**, **Combust**, **Ethereal**. Switch with the dots in the header.
-- **Edit any colour** of the current theme. Each theme keeps its own colours, with a reset button.
+- **Edit any colour** of the current theme, including the **Glow tail** and **Glow head** colours of the new-board glow and swoosh. Each theme keeps its own colours, with a reset button.
 - **Scrollbars:** edit the thumb and track colours (kept per theme) and the thickness (4 to 16 px), with its own reset button. Firefox only supports a thin and a normal width, so there sizes up to 8 px are thin.
 
 ### Fonts
@@ -186,6 +216,8 @@ A slide-out bar on the right (open and close it with the gear button, `S` or Esc
 
 ### Animations
 Each can be switched off in the Effects tab:
+- Glow around the game panel on a new board
+- Swoosh wipe that reveals a new board
 - Rock splash when opening a cell
 - Water ripple on buttons
 - Flag drop and lift
@@ -209,12 +241,12 @@ It is plain HTML, CSS and JavaScript. Open `index.html` in a browser, or serve t
 ```
 index.html
 styles/     one file per area, loaded by main.html in this order (later files override earlier ones):
-              themes.css       shipped fonts, shared variables, the four palettes
+              themes.css       shipped fonts, shared variables (every colour lives here), the four palettes
               base.css         base elements, controls, button ripple
               app.css          app background, app panel, header
               popups.css       credits and quick guide popups
               setup.css        game setup panel and the ? button
-              board.css        frame, grip, HUD, zoom bar, board, cells, effects, info line, hint marks
+              board.css        frame, grip, HUD, zoom bar, board, cells, effects (glow, wipe, explosion), info line, hint marks
               replay.css       replay section and the VHS look
               sidebar.css      settings bar, tabs, groups, settings file buttons, scrim
               tabs.css         Audio, Theme, Effects and Keys tab contents
@@ -234,10 +266,10 @@ scripts/    one file per job, loaded by index.html in this order:
               keys.js          key bindings and the Keys tab
               hint.js          showing a hint (the logic is findHint in engine.js)
               board-input.js   scroll lock, mouse, touch and keyboard input
-              effects.js       animations and the Effects tab
+              effects.js       animations (explosion, glow, wipe, splash, confetti) and the Effects tab
               sidebar.js       the settings bar and its tabs
               audio-tab.js     Audio tab
-              theme-colors.js  Theme tab: colours and scrollbars
+              theme-colors.js  Theme tab: colours (including glow) and scrollbars
               fonts.js         fonts and font upload
               assets.js        replaceable icons and images
               cursor.js        custom cursors
