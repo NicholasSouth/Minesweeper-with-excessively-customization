@@ -65,10 +65,19 @@ const idb = {
 const GROUPED = ['reveal', 'chord', 'flag', 'ui', 'explode', 'win', 'lose'];
 const vol = ch => (S.vol.master / 100) * (S.vol[ch] / 100) * 
             (GROUPED.includes(ch) ? S.vol.sfx / 100 : 1);
+/*
+    Nothing is downloaded while the page loads (the music alone is megabytes, and on a slow
+    connection it would fight with the page itself for bandwidth):
+    - the short effects are fetched once the page has loaded and the browser is idle
+    - the music is fetched, and streamed, when it is first played (after the first click or key)
+*/
+let sfxWarm = false;
+const warm = a => { a.preload = 'auto'; a.load(); };
 function loadSlot(id) { // (re)build the Audio element for a slot
     const old = base[id];
     const a = new Audio((custom[id] && custom[id].url) || SLOT[id].src);
-    a.preload = 'auto';
+    a.preload = 'none';
+    if (sfxWarm && id !== 'music') warm(a);
     if (id === 'music') {
         a.loop = true;
         if (old) old.pause();
@@ -77,6 +86,10 @@ function loadSlot(id) { // (re)build the Audio element for a slot
     base[id] = a;
 }
 SLOTS.forEach(s => loadSlot(s.id));
+addEventListener('load', () => (window.requestIdleCallback || setTimeout)(() => {
+    sfxWarm = true;
+    SLOTS.forEach(s => { if (s.id !== 'music') warm(base[s.id]); });
+}, { timeout: 4000 }));
 function sfx(k) {
     const slot = SLOT[k];
     if (S.muted || !slot || !base[k]) return; // unknown keys stay silent

@@ -5,11 +5,11 @@
 /* THEME TAB: Fonts (app font + board/counter font) */
 // ui = default app text size (px), num = default board/counter size (%). Each font has its own.
 const FONTS = {
-    bytes:    { label: 'Two Fifty Six Bytes', ui: 20, num: 105, stack: '"Two Fifty Six Bytes", monospace' }, // fonts/TwofiftysixbytesRegular-5yD0j.otf
+    bytes:    { label: 'Two Fifty Six Bytes', ui: 20, num: 105, stack: '"Two Fifty Six Bytes", monospace' }, // fonts/twofiftysixbytes.woff2
     times:    { label: 'Times New Roman', ui: 20, num: 115, stack: '"Times New Roman", Times, serif' },
     consolas: { label: 'Consolas',        ui: 19, num: 105, stack: 'Consolas, "Courier New", monospace' },
     segoe:    { label: 'Segoe UI',        ui: 18, num: 100, stack: '"Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif' },
-    ithaca:   { label: 'Ithaca',          ui: 24, num: 115, stack: '"Ithaca", sans-serif' }, // fonts/Ithaca-LVB75.ttf
+    ithaca:   { label: 'Ithaca',          ui: 24, num: 115, stack: '"Ithaca", sans-serif' }, // fonts/ithaca.woff2
     comic:    { label: 'Comic Sans MS',   ui: 19, num: 100, stack: '"Comic Sans MS", "Comic Sans", "Chalkboard SE", cursive' }
 };
 const CUSTOM_SIZE = { ui: 18, num: 100 }; // default for an uploaded font

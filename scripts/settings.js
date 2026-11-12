@@ -30,7 +30,7 @@ const DEF = {
     sbSize: 10,
     dim: 0,
     appDim: 0,
-    fx: { cell: true, button: true, flag: true, win: true, lose: true }
+    fx: { cell: true, button: true, flag: true, win: true, lose: true, glow: true, wipe: true }
 };
 const S = Object.assign({
     difficulty: 'beginner',

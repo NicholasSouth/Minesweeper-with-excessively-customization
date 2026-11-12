@@ -143,9 +143,10 @@ function replayRound(d) {
 }
 // a game just ended: keep it as the current replay, and play it if auto-replay is on
 function finishReplay() {
-    rpData = makeReplay(g, moves, g.ms, hintsUsed);
-    store.set('lastReplay', serializeReplay(rpData));
+    const d = rpData = makeReplay(g, moves, g.ms, hintsUsed);
     paintReplay();
+    // serialising + writing to storage is synchronous: keep it out of the frame where the explosion starts
+    setTimeout(() => { if (rpData === d) store.set('lastReplay', serializeReplay(d)); }, 700);
     if (S.rpAuto) rpTimer = setTimeout(() => playReplay(rpData), 2800);
 }
 function saveFile(blob, name) {
@@ -254,13 +255,15 @@ function act(fn, snd, mv) {
     if (mv && (g.rev !== rev0 || g.flags !== flags0 || g.status !== before)) {
         recordMove(mv, origin, before);
     }
+    // read where the mine is BEFORE draw() restyles every cell: reading it afterwards forces a full layout in the middle of the click
+    const boomRect = g.status === 'lost' ? cells[g.boom].getBoundingClientRect() : null;
     draw();
     hud();
     if (g.status === 'lost') {
         end();
+        boomFx(boomRect);
         sfx('explode');
         sfx('lose');
-        boomFx();
         finishReplay();
     } else if (g.status === 'won') {
         end();

@@ -70,21 +70,21 @@
     height: 48px;
     padding: 0;
     border-radius: 50%;
-    background-image: var(--ic-face-default, url("../assets/face-default.png"));
+    background-image: var(--ic-face-default, url("../assets/face-default.webp"));
     background-repeat: no-repeat;
     background-position: center;
     background-size: 70%;
 }
 #face[data-face="oh"]  { 
-    background-image: var(--ic-face-oh, url("../assets/face-oh.png")); 
+    background-image: var(--ic-face-oh, url("../assets/face-oh.webp")); 
     transform: scale(.9); 
 }
 #face[data-face="win"] { 
-    background-image: var(--ic-face-win, url("../assets/face-win.png")); 
+    background-image: var(--ic-face-win, url("../assets/face-win.webp")); 
     animation: face-win 1.1s ease-in-out; 
 }
 #face[data-face="die"] { 
-    background-image: var(--ic-face-die, url("../assets/face-die.png")); 
+    background-image: var(--ic-face-die, url("../assets/face-die.webp")); 
     animation: face-die .7s ease-out; 
 }
 @keyframes face-die {
@@ -199,9 +199,9 @@
     background-position: center;
     background-size: 62%;
 }
-.c.f { background-image: var(--ic-flag-cell, url("../assets/flag-cell.png")); } /* flag */
-.c.m { background-image: url("../assets/bomb.png"); } /* mine */
-.c.w { background-image: url("../assets/x.png"); } /* wrong flag */
+.c.f { background-image: var(--ic-flag-cell, url("../assets/flag-cell.webp")); } /* flag */
+.c.m { background-image: url("../assets/bomb.webp"); } /* mine */
+.c.w { background-image: url("../assets/x.webp"); } /* wrong flag */
 /* number colors (after .c so they win) */
 .n1 { color: var(--n1); }
 .n2 { color: var(--n2); }
@@ -224,13 +224,9 @@
     box-shadow: inset 0 0 0 5px var(--bg);
 }
 /* cell animations (JS sets the class, --ad is the delay from distance to your click) */
-@keyframes cell-in {
-    from { opacity: 0; transform: scale(.2) rotate(-25deg); }
-    60%  { opacity: 1; transform: scale(.98) rotate(4deg); }
-}
-@keyframes cell-rev {
-    from { opacity: 0; transform: scale(.3); filter: brightness(2); }
-    55%  { opacity: 1; transform: scale(1.12); filter: brightness(1.35); }
+@keyframes cell-rev { /* transform + opacity only: stays on the compositor even for a big flood fill */
+    from { opacity: 0; transform: scale(.3); }
+    55%  { opacity: 1; transform: scale(1.12); }
 }
 @keyframes flag-drop {
     from { 
@@ -249,21 +245,107 @@
     65%  { opacity: 1; transform: scale(1.3) rotate(10deg); }
 }
 @keyframes boom {
-    0%   { transform: scale(.2); filter: brightness(1); box-shadow: 0 0 0 0 var(--danger); }
-    25%  { transform: scale(1.9); filter: brightness(2.6); box-shadow: 0 0 30px 10px var(--danger); }
+    0%   { transform: scale(.2); filter: brightness(1); }
+    25%  { transform: scale(1.9); filter: brightness(2.6); }
     50%  { transform: scale(.7); }
     75%  { transform: scale(1.05); }
-    100% { transform: scale(.88); filter: brightness(1); box-shadow: 0 0 0 0 transparent; }
+    100% { transform: scale(.88); filter: brightness(1); }
 }
-.c.a-in    { animation: cell-in .4s cubic-bezier(.2, .8, .3, 1.2) var(--ad, 0ms) backwards; }
+@keyframes boom-glow { /* the red halo of .a-boom: same shadow as before, but drawn once and only faded */
+    0%   { opacity: 0; }
+    25%  { opacity: 1; }
+    100% { opacity: 0; }
+}
 .c.a-rev   { animation: cell-rev .38s cubic-bezier(.2, .8, .3, 1) var(--ad, 0ms) backwards; }
 .c.a-flag  { animation: flag-drop .5s cubic-bezier(.3, 1.2, .5, 1) var(--ad, 0ms) backwards; }
 .c.a-unflag{ animation: flag-lift .25s ease-out; }
-.c.a-mine  { animation: mine-pop .45s cubic-bezier(.2, .9, .3, 1.2) var(--ad, 0ms) backwards; }
-.c.a-boom  { animation: boom .8s ease-out; position: relative; z-index: 2; }
+/* will-change: the delayed mine pops (up to ~100 at once) otherwise run on the main thread and force a style + layout pass every frame */
+.c.a-mine  { animation: mine-pop .45s cubic-bezier(.2, .9, .3, 1.2) var(--ad, 0ms) backwards; will-change: transform, opacity; transition: none; }
+.c.a-boom  { animation: boom .8s ease-out; position: relative; z-index: 2; will-change: transform, filter; }
+.c.a-boom::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    box-shadow: 0 0 30px 10px var(--danger);
+    animation: boom-glow .8s ease-out both;
+}
+/* new board: a light sweeps once around the whole game panel, with a soft glow (JS adds .edge-glow
+   to the frame, then removes it). Colors: --glow1 (tail) and --glow2 (head), set in Theme > Colors. */
+.edge-glow {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+    border-radius: 26px; /* same as .frame */
+    box-shadow:
+        0 0 22px color-mix(in srgb, var(--glow2) 30%, transparent),
+        0 0 60px color-mix(in srgb, var(--glow1) 18%, transparent),
+        inset 0 0 28px color-mix(in srgb, var(--glow2) 10%, transparent);
+    animation: eg-life .8s ease-out forwards;
+}
+.edge-glow b {
+    position: absolute;
+    inset: 0;
+    padding: 2px; /* ring thickness */
+    border-radius: inherit;
+    overflow: hidden;
+    -webkit-mask: linear-gradient(var(--mask) 0 0) content-box, linear-gradient(var(--mask) 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(var(--mask) 0 0) content-box exclude, linear-gradient(var(--mask) 0 0);
+}
+.edge-glow i {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: var(--gd);
+    height: var(--gd);
+    margin: calc(var(--gd) / -2) 0 0 calc(var(--gd) / -2);
+    background: conic-gradient(from 0deg, transparent 0deg 230deg, var(--glow1) 290deg, 
+                var(--glow2) 330deg, transparent 360deg);
+    animation: eg-spin .7s cubic-bezier(.35, 0, .45, 1) forwards;
+}
+@keyframes eg-spin { to { transform: rotate(360deg); } }
+@keyframes eg-life { 0% { opacity: 0; } 12% { opacity: 1; } 65% { opacity: 1; } 100% { opacity: 0; } }
+/* new board: a swoosh wipes left to right. A panel-colored cover hides the board and slides away;
+   its left edge is the glowing streak, so the new board is revealed behind it */
+.board-wipe {
+    position: absolute;
+    z-index: 5;
+    pointer-events: none;
+    overflow: hidden;
+    border-radius: 14px; /* same as .wrap */
+}
+.board-wipe i {
+    position: absolute;
+    inset: 0;
+    background: var(--surface);
+    will-change: transform;
+    animation: bw-run .55s cubic-bezier(.5, 0, .2, 1) forwards;
+}
+.board-wipe i::before { /* the swoosh: a bright head with a long fading trail behind it */
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -130px;
+    width: 130px;
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--glow1) 45%, transparent) 60%, var(--glow2));
+}
+.board-wipe i::after { /* a thinner echo further back */
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -210px;
+    width: 60px;
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--glow1) 30%, transparent));
+}
+@keyframes bw-run { to { transform: translateX(calc(100% + 210px)); } }
 /* explosion: fireball, two shockwaves, sparks (JS puts .fx on the clicked mine) */
-.fx { position: absolute; width: 0; height: 0; z-index: 3; pointer-events: none; }
-.fx i { position: absolute; left: 0; top: 0; display: block; }
+.fx { position: absolute; width: 0; height: 0; z-index: 3; pointer-events: none; contain: layout style; }
+.fx i { position: absolute; left: 0; top: 0; display: block; will-change: transform, opacity; }
 .fx .core {
     width: calc(var(--cs) * 2.4);
     height: calc(var(--cs) * 2.4);
@@ -276,18 +358,18 @@
     from { transform: scale(.1); opacity: 1; } 
     to { transform: scale(2.2); opacity: 0; } 
 }
-.fx .ring {
-    width: calc(var(--cs) * 2);
-    height: calc(var(--cs) * 2);
-    margin: calc(var(--cs) * -1) 0 0 calc(var(--cs) * -1);
+.fx .ring { /* built at its final size and scaled up, so no border-width animation (that re-laid out every frame) */
+    width: calc(var(--cs) * 8.4);
+    height: calc(var(--cs) * 8.4);
+    margin: calc(var(--cs) * -4.2) 0 0 calc(var(--cs) * -4.2);
     border-radius: 50%;
-    border: 3px solid var(--danger);
+    border: 5px solid var(--danger);
     animation: ring .75s ease-out forwards;
 }
 .fx .ring.r2 { border-color: var(--text); animation-delay: .12s; animation-duration: .9s; }
-@keyframes ring { 
-    from { transform: scale(.2); opacity: 1; } 
-    to { transform: scale(4.2); opacity: 0; border-width: 1px; } 
+@keyframes ring { /* .2 / 4.2 -> 1 of the final size: the same growth as before */
+    from { transform: scale(.048); opacity: 1; } 
+    to { transform: scale(1); opacity: 0; } 
 }
 .fx .spark {
     width: var(--sz, 6px);
@@ -321,7 +403,7 @@
     height: var(--sz);
     margin: calc(var(--sz) / -2) 0 0 calc(var(--sz) / -2);
     border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%;
-    background: color-mix(in srgb, var(--n1) 75%, white);
+    background: var(--n1);
 }
 .splash .chip {
     width: var(--sz);
@@ -338,6 +420,7 @@
     pointer-events: none;
     background: radial-gradient(circle at var(--fx, 50%) var(--fy, 50%), 
                 color-mix(in srgb, var(--danger) 60%, transparent), transparent 65%);
+    will-change: opacity;
     animation: flash .55s ease-out forwards;
 }
 @keyframes flash { from { opacity: 1; } to { opacity: 0; } }

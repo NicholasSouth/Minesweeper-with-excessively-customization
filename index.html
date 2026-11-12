@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Minesweeper v4.0</title>
   <link rel="icon" href="assets/app-icon.ico" sizes="any">
+  <!-- the default font is needed at once; without this the browser only finds it after reading the CSS -->
+  <link rel="preload" href="fonts/twofiftysixbytes.woff2" as="font" type="font/woff2" crossorigin>
   <!-- one file per area; keep this order, later files override earlier ones -->
   <link rel="stylesheet" href="styles/themes.css">
   <link rel="stylesheet" href="styles/base.css">
@@ -92,7 +94,7 @@
         <button id="edit">Edit as custom</button>
         <button id="start">New game</button>
         <button id="flagmode" aria-pressed="false">
-          <img class="btn-ico" src="assets/flag-icon.png" alt="" width="18" height="18"> 
+          <img class="btn-ico" src="assets/flag-icon.webp" alt="" width="18" height="18"> 
           Flag mode
         </button>
         <!-- shows a move that logic can prove (key H) -->
@@ -442,7 +444,14 @@
         <p class="hint">
           Turn single effects on or off. 
           Everything also stays off when your system's reduce-motion setting is on.
+          The glow and swoosh colors are under Theme, in Colors.
         </p>
+        <label class="check">
+          <input id="fx-glow" type="checkbox"> Glow around the game panel on a new board
+        </label>
+        <label class="check">
+          <input id="fx-wipe" type="checkbox"> Swoosh wipe that reveals a new board
+        </label>
         <label class="check">
           <input id="fx-cell" type="checkbox"> Rock splash when you open a cell
         </label>

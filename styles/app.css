@@ -72,19 +72,19 @@ h1 {
     width: 40px;
     height: 40px;
     padding: 0;
-    background-image: var(--ic-mute-on, url("../assets/speaker-default.png"));
+    background-image: var(--ic-mute-on, url("../assets/speaker-default.webp"));
     background-repeat: no-repeat;
     background-position: center;
     background-size: 60%;
 }
 #mute[data-muted="true"] { 
-    background-image: var(--ic-mute-off, url("../assets/speaker-mute.png")); 
+    background-image: var(--ic-mute-off, url("../assets/speaker-mute.webp")); 
 }
 #settings-btn {
     width: 40px;
     height: 40px;
     padding: 0;
-    background-image: var(--ic-settings, url("../assets/settings.png"));
+    background-image: var(--ic-settings, url("../assets/settings.webp"));
     background-repeat: no-repeat;
     background-position: center;
     background-size: 60%;

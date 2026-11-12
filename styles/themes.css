@@ -3,12 +3,12 @@
 /* Fonts shipped with the app (files live in /fonts, next to /styles and /scripts) */
 @font-face {
     font-family: "Two Fifty Six Bytes";
-    src: url("../fonts/TwofiftysixbytesRegular-5yD0j.otf") format("opentype");
+    src: url("../fonts/twofiftysixbytes.woff2") format("woff2");
     font-display: swap;
 }
 @font-face {
     font-family: "Ithaca";
-    src: url("../fonts/Ithaca-LVB75.ttf") format("truetype");
+    src: url("../fonts/ithaca.woff2") format("woff2");
     font-display: swap;
 }
 
@@ -27,6 +27,8 @@
     --vhs-scan: rgba(0, 0, 0, .22);          /* scanlines */
     --vhs-vignette: rgba(0, 0, 0, .35);      /* dark screen edges */
     --vhs-bar: rgba(255, 255, 255, .13);     /* rolling tracking bar */
+    --vhs-bar-core: rgba(255, 255, 255, .22); /* bright core line of the tracking bar */
+    --vhs-grain: #fff;                       /* film grain specks */
     --vhs-text: #fff;                        /* PLAY label */
     --vhs-glow: rgba(255, 255, 255, .5);     /* PLAY label glow */
     --vhs-red: rgba(255, 0, 60, .8);         /* red fringe on the label */
@@ -36,6 +38,7 @@
     /* explosion fireball (same in every theme, like the VHS tape colors) */
     --fx-core: #fff;                         /* white-hot centre */
     --fx-fire: #ffd166;                      /* flame */
+    --mask: #000;                            /* only used for ring masks, never visible */
 }
 /* 
     A theme is a palette on any element with data-theme (<html> and each header dot).
@@ -60,6 +63,7 @@
     --n1: #8fd3ff; --n2: #7be0a4; --n3: #ff8a8a; --n4: #b6a6ff;
     --n5: #ffb86b; --n6: #5fe0d0; --n7: #e6edf2; --n8: #9fb0bd;
     --sbthumb: #2c6e8f; --sbtrack: #0e1d28; /* scrollbar */
+    --glow1: #7a5cff; --glow2: #5fd4ff; /* new-board glow + wipe: tail, head */
 }
 [data-theme="lust"] {
     --bg: #070508; --surface: #141018; --text: #f4eaf3; --muted: #a995a8;
@@ -68,6 +72,7 @@
     --n1: #9ec5ff; --n2: #86e3a5; --n3: #ff8fa8; --n4: #c3a9ff;
     --n5: #ffbe7a; --n6: #6fe6d6; --n7: #ece6ee; --n8: #a995a8;
     --sbthumb: #8a3a78; --sbtrack: #0d0a11;
+    --glow1: #7a5cff; --glow2: #e46cc6;
 }
 [data-theme="combust"] {
     --bg: #090807; --surface: #16120f; --text: #f3ede6; --muted: #a39a90;
@@ -76,6 +81,7 @@
     --n1: #9ccbff; --n2: #8be0a0; --n3: #ff8b82; --n4: #bba8ff;
     --n5: #ffc27a; --n6: #6fe0cf; --n7: #eee9e3; --n8: #a39a90;
     --sbthumb: #a8601c; --sbtrack: #0e0c0a;
+    --glow1: #ff5a4a; --glow2: #ffc27a;
 }
 [data-theme="ethereal"] {
     color-scheme: light;
@@ -88,4 +94,5 @@
     --n1: #1d4fb8; --n2: #1d7a35; --n3: #b32424; --n4: #3d2391;
     --n5: #8e3f0a; --n6: #00707a; --n7: #24211b; --n8: #4d493f;
     --sbthumb: #6f6a5e; --sbtrack: #b0ab9e;
+    --glow1: #3d2391; --glow2: #1d4fb8;
 }
