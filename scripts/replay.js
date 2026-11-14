@@ -15,7 +15,8 @@ const MIRE_VERSION = 1, // v4.0 starts a new format: old .misw replays can no lo
 let moves = [], replaying = false, rpTimer = 0, rpData = null;
 const rpBadge = $('#rp');
 S.rpSpeed = SPEEDS.includes(+S.rpSpeed) ? +S.rpSpeed : 1;
-S.rpAuto = S.rpAuto !== false;
+// the endless VHS replay loop is heavy for phones: off by default on touch screens (still a switch in settings)
+S.rpAuto = S.rpAuto === undefined ? !matchMedia('(pointer: coarse)').matches : S.rpAuto !== false;
 function recordMove(k, i, before) {
     const t = before === 'idle' ? 0 : Math.round(performance.now() - t0);
     moves.push({ k, i, t });
@@ -276,7 +277,9 @@ function act(fn, snd, mv) {
 }
 // open a cell; on a flag (left-click, D, Space) it removes the flag AND opens the cell
 function doReveal(i) {
-    if (replaying) return;
+    if (replaying || dealing) return;
+    // first click of a big no-guess board: deal it in the worker, then come back here (see deal.js)
+    if (g.status === 'idle' && dealInWorker(g, i, () => doReveal(i))) return;
     origin = i;
     const was = g.status;
     if (g.st[i] === 2) {

@@ -121,6 +121,7 @@ function draw() {
 /* board: game flow */
 // opts.seed: deal this board (from a .mifi file) instead of a random one
 function start(opts) {
+    cancelDeal();
     const { r, c, m } = cfg();
     clearInterval(tick);
     stopReplay();

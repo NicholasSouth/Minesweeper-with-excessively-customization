@@ -1,4 +1,4 @@
-# Minesweeper (with excessive customization) v5.0
+# Minesweeper (with excessive customization) v5.1
 
 A browser Minesweeper with a lot of knobs: custom boards, a movable and resizable board, zoom, themes, fonts, sounds, cursors, backgrounds, rebindable keys, and a replay of every finished game, hints, a quick guide, and three file types to save and share replays, settings and board seeds.
 
@@ -8,7 +8,24 @@ No install, no build step, no account. Everything runs in your browser.
 
 ---
 
-## What's new in v5.0
+## What's new in v5.1
+
+This version is about speed: big boards, phones and slow connections. The rules, the board layouts and the file formats are unchanged.
+Also I give my sincere apology to version 5.0, eventhough is a big update but is done very poorly with a lot of wrong codes, this version is a total touch up to every aspect of the codes
+
+- **Big no-guess boards no longer freeze the page.** The search for a guess-free layout on your first click used to run on the page itself, so on a phone a big or dense board could freeze it for seconds. Now it runs in a **Web Worker** (`scripts/deal-worker.js`), a background thread, and the page stays responsive.
+  - Only boards that can be slow use it: **400 or more cells, or 17% or more mines**. Smaller boards are dealt instantly in the page, as before.
+  - If the deal takes more than about 0.15 seconds, the info line shows *Dealing a no-guess board…*. Starting a new game while it is dealing simply cancels it.
+  - If workers are not available (for example when you open `index.html` straight from disk), the game deals in the page like before.
+  - The worker is started while the page is idle after loading, so the first click does not pay for starting it.
+- **A board is only dealt once.** The layout depends only on the board size, mines, first-click mode, seed, no-guess setting and your first cell, so the game now keeps the last few layouts in memory. Every loop of the replay after the first one reuses the layout instead of solving it again (before, each loop re-ran the solver: about 1 second on a dense 16×30 board on a desktop, several times that on a phone). The boards and replays are exactly the same as before.
+- **Faster repeat visits (service worker):** `sw.js` saves the game files (code, styles, images, fonts and sound effects) on your device the first time you visit. After that the game loads from the device, even on a slow or dropped connection. The two long music tracks are not saved; they still stream. This needs https or `localhost`, so it is skipped when you open the file from disk. When a new version is released, the old copy is replaced on your next reload.
+- **Smoother scrolling on phones:** the scroll lock used to keep a listener on every touch and wheel movement at all times, which makes the browser wait for the page before it scrolls. It is now added only while the lock is on (`C`), so phones, which can't turn the lock on, never pay for it.
+- **Replay automatically is off by default on touch screens.** The endless VHS replay loop is heavy for phones. The switch is still in the Replay section if you want it back; anything you already chose is kept.
+- The page title and the credits popup now say 5.1 (they still said 4.0).
+
+<details>
+<summary>Previous version: v5.0</summary>
 
 This version is about animation: smoother, cheaper to run, and customizable. The rules and the file formats are unchanged.
 
@@ -35,8 +52,10 @@ This version is about animation: smoother, cheaper to run, and customizable. The
   - the explosion's yellow spark uses `--fx-fire`.
 - The new effects only animate `transform` and `opacity`, and are skipped when your system's reduce-motion setting is on.
 
+</details>
+
 <details>
-<summary>Previous version: v4.0</summary>
+<summary>Earlier version: v4.0</summary>
 
 - **Hints (`H`):** press `H` (or the **Hint** button) and the game marks a move that logic can prove from what is on the board. A **green glow** is a safe cell, a **red glow** is a mine, and **dashed rings** show the numbers the hint is built from. A hint never moves your keyboard cursor or the view. See [Hints](#hints).
 - **Quick guide (`G` or `?`):** a popup with the goal, the controls (it shows your own key bindings), hints and files. Open it with `G` or the **?** button in the top right corner of the board setup panel; close it with `G`, `Esc`, **Close** or a click outside.
@@ -168,6 +187,8 @@ Clicking a flagged cell removes the flag and opens the cell. **Flag mode** turns
 - Typical cost is a few milliseconds. Beginner and Intermediate almost always succeed on the first try or two, Expert needs about 20 tries with Safe zone, and more with Safe cell or No protection (still well under a second).
 - **Very dense custom boards** (roughly 20% mines on big boards and up) may not have a guess-free layout within the limit. Then the game uses the layout that logic got furthest on and shows a message that this board may need a guess.
 - It is deterministic: the same seed and first click always give the same board, so replays still match exactly.
+- **Big or dense boards are dealt in a background worker** (400 or more cells, or 17% or more mines), so the page does not freeze while the solver works. On a very dense custom board the wait can still be a few seconds on a phone; the info line says *Dealing a no-guess board…* meanwhile.
+- Dealt layouts are remembered (the last few), so a replay never solves the same board twice.
 
 ### Keys
 - Every action has **two key slots**: move up/down/left/right, open cell (also chords), flag, show a hint, jump to board and lock / unlock view, open / close settings, open / close quick guide, mute, new game, zoom in, zoom out, reset view, reset layout.
@@ -179,7 +200,7 @@ Clicking a flagged cell removes the flag and opens the cell. **Flag mode** turns
 ### Replay
 Every move you make (open, flag, chord) is recorded. The **Replay** section under the board is where you use it:
 - **Watch replay / Stop replay:** plays the last finished game on the board in a loop with a VHS-style effect (scanlines, tracking bar, grain, colour fringing, tape tear, a blinking PLAY label). Stop replay (or New game) deals a fresh board.
-- **Replay automatically when a game ends:** on by default; untick it if you'd rather start the replay yourself.
+- **Replay automatically when a game ends:** on by default (off by default on touch screens, where the looping effect is heavy); untick or tick it any time to change it.
 - **Speed:** 0.5×, 1×, 2×, 4× or 8×.
 - **Export .mire:** saves the replay as a small `.mire` file (plain JSON: board size, mines, first-click mode, board type, the random seed, hints used and the list of moves).
 - **Import .mire:** loads a `.mire` file and plays it, even if it was made on another board size or by someone else. Files are checked first, so a broken or foreign file gives an error message instead of a broken board. Old `.misw` files from v3 are refused with a message.
@@ -228,6 +249,7 @@ Everything also stays off when your system's **reduce motion** setting is on.
 
 ### Other
 - **Responsive** layout that works on phones and tablets as well as desktops.
+- **Fast repeat visits:** after your first visit the game is kept on your device (service worker, needs https or `localhost`), so it opens quickly even on a slow connection. Music still streams.
 - **Everything is saved in your browser:** settings, colours, key bindings, fonts, uploads and best times stay on your device. Nothing is sent to a server, and other visitors never see your changes.
 - **Reset all appearance** puts colours, fonts, icons and backgrounds back to the defaults.
 - Click the app name in the header for the credits.
@@ -240,6 +262,7 @@ It is plain HTML, CSS and JavaScript. Open `index.html` in a browser, or serve t
 
 ```
 index.html
+sw.js         service worker: keeps the game on the device for fast repeat visits (change VERSION in it on every release)
 styles/     one file per area, loaded by main.html in this order (later files override earlier ones):
               themes.css       shipped fonts, shared variables (every colour lives here), the four palettes
               base.css         base elements, controls, button ripple
@@ -254,7 +277,8 @@ styles/     one file per area, loaded by main.html in this order (later files ov
               scroll.css       scroll lock and scrollbars
               motion.css       reduced motion (keep last)
 scripts/    one file per job, loaded by index.html in this order:
-              engine.js        game rules (mines, reveal, chord, win/lose), the no-guess solver and the hint finder
+              engine.js        game rules (mines, reveal, chord, win/lose), the no-guess solver, the hint finder and the deal cache
+              deal.js          first-click deal of big no-guess boards in a worker, with the fallback
               settings.js      saved settings and defaults
               audio.js         sound effects and music playback
               shell.js         shared helpers, app background video, header
@@ -277,11 +301,16 @@ scripts/    one file per job, loaded by index.html in this order:
               credits.js       credits popup
               guide.js         quick guide popup
               files.js         .mise settings and .mifi board seed export / import
-              boot.js          restores saved uploads and starts the first game
+              boot.js          restores saved uploads, starts the first game and registers sw.js
+              deal-worker.js   (started by deal.js, not listed in index.html) runs the solver in a worker; it loads engine.js
 fonts/      TwofiftysixbytesRegular-5yD0j.otf, Ithaca-LVB75.ttf
 assets/     icons, cursors and images, app-icon.ico (browser tab icon)
 audio/      sound effects, Joakim_Karud_-_Classic.mp3, Dj_Quads_-_Dreams.mp3
 ```
+
+The service worker and the Web Worker need the game to be served over `http://localhost` or https (`python -m http.server` is enough). Opened straight from disk the game works the same, just without them.
+
+**Releasing a new version:** change `VERSION` in `sw.js` (for example `v5.1.0` to `v5.1.1`) every time you upload a change, otherwise players who already visited keep the old saved files. While testing, tick *Update on reload* under Application > Service Workers in the browser's dev tools.
 
 ## Credits and licenses
 

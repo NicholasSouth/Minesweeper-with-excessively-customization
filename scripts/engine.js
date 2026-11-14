@@ -167,7 +167,31 @@ function solveFrom(g, mine, adj, first) {
     return open;
 }
 const NG_TRIES = 4000; // layouts tried before giving up (a count, never a clock: replays must repeat exactly)
+/*
+    DEAL CACHE
+    A layout depends only on: board size, mine count, safety mode, seed, no-guess flag and the first cell.
+    The same inputs always give the same layout, so a layout that was already dealt (the game you just
+    played, or a worker's answer) is reused instead of solved again. This is what makes every loop of the
+    replay after the first one free. g.mine and g.adj are never changed after the deal, so sharing them is safe.
+*/
+const dealCache = new Map();
+const dealKey = (g, first) => [g.rows, g.cols, g.mines, g.safety, g.seed, g.noGuess ? 1 : 0, first].join('|');
+function dealCacheSet(key, mine, adj, ng) {
+    dealCache.set(key, { mine, adj, ng });
+    if (dealCache.size > 4) dealCache.delete(dealCache.keys().next().value); // keep only the last few
+}
 function place(g, first) {
+    const key = dealKey(g, first), hit = dealCache.get(key);
+    if (hit) {
+        g.mine = hit.mine;
+        g.adj = hit.adj;
+        g.ng = hit.ng;
+        return;
+    }
+    placeRaw(g, first);
+    if (g.noGuess) dealCacheSet(key, g.mine, g.adj, g.ng); // classic boards are instant, no need to keep them
+}
+function placeRaw(g, first) { // the real deal (slow in no-guess mode); also used by the worker
     const ban = new Set([first]);
     if (g.safety === 'zone') nbrs(g, first).forEach(j => ban.add(j));
     const pool = [];

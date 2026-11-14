@@ -33,3 +33,8 @@ applyMute();
 applyAudio();
 sync();
 start();
+
+// repeat visits load from the device (needs https; skipped on file://)
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+    addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}

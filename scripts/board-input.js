@@ -51,6 +51,9 @@ function setLock(on) {
         root.style.setProperty('--lock-h', root.scrollHeight + 'px');
     }
     locked = on;
+    ['wheel', 'touchmove'].forEach(t => on
+        ? addEventListener(t, lockBlock, { passive: false })
+        : removeEventListener(t, lockBlock));
     root.classList.toggle('locked', on);
     lockBadge.hidden = !on;
     if (on) focusBoard();
@@ -61,10 +64,12 @@ function setLock(on) {
 addEventListener('scroll', () => {
     if (locked && (scrollX !== lockX || scrollY !== lockY)) scrollTo(lockX, lockY);
 }, { passive: true });
-// wheel and touch scrolling outside the board window do nothing while locked
-['wheel', 'touchmove'].forEach(t => addEventListener(t, e => {
-    if (locked && !e.ctrlKey && !wrap.contains(e.target)) e.preventDefault();
-}, { passive: false }));
+// wheel and touch scrolling outside the board window do nothing while locked.
+// A non-passive touchmove/wheel listener makes the browser wait for JS before every scroll, so it is only
+// attached while the lock is on (phones have no lock key, so they never pay for it)
+const lockBlock = e => {
+    if (!e.ctrlKey && !wrap.contains(e.target)) e.preventDefault();
+};
 
 /* board: mouse, touch, keyboard */
 const ptrs = new Map();   // pointers down on the board: id -> {x, y}
